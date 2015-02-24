@@ -8,6 +8,7 @@
 #include <FTL/MatchCharAlways.h>
 #include <FTL/MatchCharAny.h>
 #include <FTL/MatchCharNever.h>
+#include <FTL/MatchCharRange.h>
 #include <FTL/MatchCharSingle.h>
 #include <FTL/MatchCharWhitespace.h>
 
