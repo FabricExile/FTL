@@ -6,90 +6,74 @@
 #define _FTL_Path_h
 
 #include <FTL/Config.h>
+#include <FTL/MatchChar.h>
+#include <FTL/MatchPrefix.h>
 
 #include <assert.h>
 #include <string>
 
 namespace FTL {
 
-#if defined(FABRIC_PLATFORM_POSIX)
+#if defined(FTL_PLATFORM_POSIX)
 static const char PathSep = '/';
-#elif defined(FABRIC_PLATFORM_WINDOWS)
+#elif defined(FTL_PLATFORM_WINDOWS)
 static const char PathSep = '\\';
 #else
 # error "Unsupported platform"
 #endif
 
+template<typename StringTy>
 inline void PathAppendEntry(
-  std::string &path,
-  char const *entryCStr
+  StringTy &path,
+  StrRef entry
   )
 {
-  bool entryNonEmpty = entryCStr && *entryCStr;
-  size_t pathSize = path.size();
-  if ( pathSize > 0
-    && path[pathSize-1] != PathSep
-    && entryNonEmpty )
-  {
+  if ( (!entry.empty() && entry.front() != PathSep)
+    && (!path.empty() && path[path.size()-1] != PathSep) )
     path += PathSep;
-    if ( entryNonEmpty )
-    {
-      assert( *entryCStr != PathSep );
-      path += entryCStr;
-    }
-  }
-}
-
-inline void PathAppendEntry(
-  std::string &path,
-  std::string const &entry
-  )
-{
-  PathAppendEntry( path, entry.c_str() );
+  path += entry;
 }
 
 inline std::string PathJoin(
-  char const *lhsPathCStr,
-  char const *rhsPathCStr
-  )
-{
-  std::string result;
-  PathAppendEntry( result, lhsPathCStr );
-  PathAppendEntry( result, rhsPathCStr );
-  return result;
-}
-
-inline std::string PathJoin(
-  std::string const &lhsPathStr,
-  char const *rhsPathCStr
-  )
-{
-  std::string result;
-  PathAppendEntry( result, lhsPathStr );
-  PathAppendEntry( result, rhsPathCStr );
-  return result;
-}
-
-inline std::string PathJoin(
-  char const *lhsPathCStr,
-  std::string const &rhsPathStr
-  )
-{
-  std::string result;
-  PathAppendEntry( result, lhsPathCStr );
-  PathAppendEntry( result, rhsPathStr );
-  return result;
-}
-
-inline std::string PathJoin(
-  std::string const &lhsPathStr,
-  std::string const &rhsPathStr
+  StrRef lhsPathStr,
+  StrRef rhsPathStr
   )
 {
   std::string result;
   PathAppendEntry( result, lhsPathStr );
   PathAppendEntry( result, rhsPathStr );
   return result;
+}
+
+inline std::pair<StrRef, StrRef> PathSplit( StrRef path )
+{
+  return path.rsplit( PathSep );
+}
+
+typedef
+#if defined(FTL_PLATFORM_POSIX)
+  MatchPrefixChar< MatchCharSingle<PathSep> >
+#elif defined(FTL_PLATFORM_WINDOWS)
+  MatchPrefixAny<
+    MatchPrefixChar< MatchCharSingle<PathSep> >,
+    MatchPrefixSeq<
+      MatchPrefixChar<
+        MatchCharAny<
+          MatchCharRange<'A', 'Z'>,
+          MatchCharRange<'a', 'z'>
+          >
+        >,
+      MatchPrefixChar< MatchCharSingle<':'> >,
+      MatchPrefixChar< MatchCharSingle<PathSep> >
+      >
+    >
+#endif
+  MatchPrefixAbsolutePath;
+
+inline bool PathIsAbsolute( StrRef path )
+{
+  StrRef::IT it = path.begin();
+  return MatchPrefixAbsolutePath()( it, path.end() );
 }
 
 } // namespace FTL

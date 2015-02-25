@@ -2,25 +2,25 @@
  *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FabricOS_Config_h
-#define _FabricOS_Config_h
+#ifndef _FTL_Config_h
+#define _FTL_Config_h
 
 #if defined( __linux__ )
 
-# define FABRIC_OS_LINUX
-# define FABRIC_PLATFORM_POSIX
+# define FTL_OS_LINUX
+# define FTL_PLATFORM_POSIX
 
 #elif defined( __APPLE__ )
 
-# define FABRIC_OS_DARWIN
-# define FABRIC_PLATFORM_POSIX
+# define FTL_OS_DARWIN
+# define FTL_PLATFORM_POSIX
 
 #elif defined( _MSC_VER )
 
-# define FABRIC_OS_WINDOWS
-# define FABRIC_PLATFORM_WINDOWS
+# define FTL_OS_WINDOWS
+# define FTL_PLATFORM_WINDOWS
 
-# if !defined( FABRIC_INCLUDE_WINDOWS_UI )
+# if !defined( FTL_INCLUDE_WINDOWS_UI )
 #  define WIN32_LEAN_AND_MEAN   // Avoid unnecessary cruft
 # endif
 
@@ -45,17 +45,17 @@ static inline float roundf( float x ) { return floorf(x+0.5f); }
 #endif
 
 // Build architecture
-#if defined(FABRIC_PLATFORM_POSIX)
+#if defined(FTL_PLATFORM_POSIX)
 # if defined(__x86_64)
-#  define FABRIC_ARCH_64BIT
+#  define FTL_ARCH_64BIT
 # else
-#  define FABRIC_ARCH_32BIT
+#  define FTL_ARCH_32BIT
 # endif
-#elif defined(FABRIC_PLATFORM_WINDOWS)
+#elif defined(FTL_PLATFORM_WINDOWS)
 # if defined(_WIN64)
-#  define FABRIC_ARCH_64BIT
+#  define FTL_ARCH_64BIT
 # else
-#  define FABRIC_ARCH_32BIT
+#  define FTL_ARCH_32BIT
 # endif
 #else
 # error "Unsupported platform"
@@ -63,9 +63,9 @@ static inline float roundf( float x ) { return floorf(x+0.5f); }
 
 // Build settings
 #if defined(NDEBUG)
-# define FABRIC_BUILD_RELEASE
+# define FTL_BUILD_RELEASE
 #else
-# define FABRIC_BUILD_DEBUG
+# define FTL_BUILD_DEBUG
 #endif
 
-#endif // _FabricOS_Config_h
+#endif // _FTL_Config_h

@@ -9,8 +9,9 @@
 #include <FTL/Path.h>
 
 #include <string>
+#include <string.h>
 #include <vector>
-#if defined(FABRIC_PLATFORM_POSIX)
+#if defined(FTL_PLATFORM_POSIX)
 # include <dirent.h>
 # include <errno.h>
 # include <fcntl.h>
@@ -18,10 +19,10 @@
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <unistd.h>
-#elif defined(FABRIC_PLATFORM_WINDOWS)
+#elif defined(FTL_PLATFORM_WINDOWS)
 # include <Windows.h>
 #else
-# error "Unsupport FABRIC_PLATFORM_..."
+# error "Unsupport FTL_PLATFORM_..."
 #endif
 
 namespace FTL {
@@ -44,7 +45,7 @@ inline bool FSStat(
   if ( !pathCStr || !*pathCStr )
     pathCStr = ".";
 
-#if defined(FABRIC_PLATFORM_POSIX)
+#if defined(FTL_PLATFORM_POSIX)
   struct stat st;
   if ( ::stat( pathCStr, &st ) == -1 )
     return false;
@@ -57,7 +58,7 @@ inline bool FSStat(
     statInfo.type = FSStatInfo::Other;
 
   return true;
-#elif defined(FABRIC_PLATFORM_WINDOWS)
+#elif defined(FTL_PLATFORM_WINDOWS)
   DWORD fa = ::GetFileAttributesA( pathCStr );
   if ( fa == INVALID_FILE_ATTRIBUTES )
     return false;
@@ -74,12 +75,23 @@ inline bool FSStat(
 }
 
 inline bool FSStat(
-  std::string const &path,
+  std::string const &pathStdString,
   FSStatInfo &statInfo
   )
 {
-  return FSStat( path.c_str(), statInfo );
+  return FSStat( pathStdString.c_str(), statInfo );
 }
+
+inline bool FSStat(
+  StrRef pathStr,
+  FSStatInfo &statInfo
+  )
+{
+  char *pathCStr = (char *)alloca( pathStr.size() + 1 );
+  memcpy( pathCStr, pathStr.data(), pathStr.size() );
+  pathCStr[pathStr.size()] = '\0';
+  return FSStat( pathCStr, statInfo );
+}  
 
 inline bool FSExists( char const *pathCStr )
 {
@@ -87,9 +99,17 @@ inline bool FSExists( char const *pathCStr )
   return FSStat( pathCStr, statInfo );
 }
 
-inline bool FSExists( std::string const &path )
+inline bool FSExists( std::string const &pathStdString )
 {
-  return FSExists( path.c_str() );
+  return FSExists( pathStdString.c_str() );
+}
+
+inline bool FSExists( StrRef const &pathStr )
+{
+  char *pathCStr = (char *)alloca( pathStr.size() + 1 );
+  memcpy( pathCStr, pathStr.data(), pathStr.size() );
+  pathCStr[pathStr.size()] = '\0';
+  return FSExists( pathCStr );
 }
 
 inline bool FSIsFile( char const *pathCStr )
@@ -104,6 +124,14 @@ inline bool FSIsFile( std::string const &path )
   return FSIsFile( path.c_str() );
 }
 
+inline bool FSIsFile( StrRef const &pathStr )
+{
+  char *pathCStr = (char *)alloca( pathStr.size() + 1 );
+  memcpy( pathCStr, pathStr.data(), pathStr.size() );
+  pathCStr[pathStr.size()] = '\0';
+  return FSIsFile( pathCStr );
+}
+
 inline bool FSIsDir( char const *pathCStr )
 {
   FSStatInfo statInfo;
@@ -116,6 +144,14 @@ inline bool FSIsDir( std::string const &path )
   return FSIsDir( path.c_str() );
 }
 
+inline bool FSIsDir( StrRef const &pathStr )
+{
+  char *pathCStr = (char *)alloca( pathStr.size() + 1 );
+  memcpy( pathCStr, pathStr.data(), pathStr.size() );
+  pathCStr[pathStr.size()] = '\0';
+  return FSIsDir( pathCStr );
+}
+
 inline bool FSMkDir( char const *pathCStr )
 {
   FSStatInfo statInfo;
@@ -125,9 +161,9 @@ inline bool FSMkDir( char const *pathCStr )
   if ( !pathCStr || !*pathCStr )
     return true;
   
-#if defined(FABRIC_PLATFORM_POSIX)
+#if defined(FTL_PLATFORM_POSIX)
   return ::mkdir( pathCStr, 0777 ) == 0;
-#elif defined(FABRIC_PLATFORM_WINDOWS)
+#elif defined(FTL_PLATFORM_WINDOWS)
   return ::CreateDirectory( pathCStr, NULL );
 #endif
 }
@@ -137,28 +173,27 @@ inline bool FSMkDir( std::string const &path )
   return FSMkDir( path.c_str() );
 }
 
-inline bool FSMkDirRecursive( char const *pathCStr )
+inline bool FSMkDir( StrRef const &pathStr )
 {
-  if ( !pathCStr )
-    return true;
-
-  char const *lastPathSepCStr = 0;
-  for ( char const *p = pathCStr; *p; ++p )
-    if ( *p == PathSep )
-      lastPathSepCStr = p;
-
-  if ( lastPathSepCStr )
-  {
-    std::string parentDir( pathCStr, lastPathSepCStr );
-    if ( !FSMkDirRecursive( parentDir.c_str() ) )
-      return false;
-  }
+  char *pathCStr = (char *)alloca( pathStr.size() + 1 );
+  memcpy( pathCStr, pathStr.data(), pathStr.size() );
+  pathCStr[pathStr.size()] = '\0';
   return FSMkDir( pathCStr );
 }
 
-inline bool FSMkDirRecursive( std::string const &dir )
+inline bool FSMkDirRecursive( StrRef pathStr )
 {
-  return FSMkDirRecursive( dir.c_str() );
+  if ( pathStr.empty() )
+    return true;
+
+  std::pair<StrRef, StrRef> pathSplit = PathSplit( pathStr );
+
+  if ( !pathSplit.first.empty() )
+  {
+    if ( !FSMkDirRecursive( pathSplit.first ) )
+      return false;
+  }
+  return FSMkDir( pathStr );
 }
 
 inline bool FSDirAppendEntries(
@@ -169,7 +204,7 @@ inline bool FSDirAppendEntries(
   if ( !pathCStr || !*pathCStr )
     pathCStr = ".";
 
-#if defined(FABRIC_PLATFORM_POSIX)
+#if defined(FTL_PLATFORM_POSIX)
   DIR *dir = ::opendir( pathCStr );
   if ( !dir )
     return false;
@@ -191,7 +226,7 @@ inline bool FSDirAppendEntries(
     entries.push_back( entryCStr );
   }
   ::closedir( dir );
-#elif defined(FABRIC_OS_WINDOWS)
+#elif defined(FTL_OS_WINDOWS)
   std::string searchGlob = FSPathJoin( pathCStr, "*" );
 
   WIN32_FIND_DATAA fd;
@@ -228,6 +263,17 @@ inline bool FSDirAppendEntries(
   )
 {
   return FSDirAppendEntries( path.c_str(), entries );
+}
+
+inline bool FSDirAppendEntries(
+  StrRef pathStr,
+  std::vector<std::string> &entries
+  )
+{
+  char *pathCStr = (char *)alloca( pathStr.size() + 1 );
+  memcpy( pathCStr, pathStr.data(), pathStr.size() );
+  pathCStr[pathStr.size()] = '\0';
+  return FSDirAppendEntries( pathCStr, entries );
 }
 
 } // namespace FTL

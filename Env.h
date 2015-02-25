@@ -13,9 +13,9 @@
 
 namespace FTL {
 
-#if defined(FABRIC_PLATFORM_POSIX)
+#if defined(FTL_PLATFORM_POSIX)
 static const char EnvListSep = ':';
-#elif defined(FABRIC_PLATFORM_WINDOWS)
+#elif defined(FTL_PLATFORM_WINDOWS)
 static const char EnvListSep = ';';
 #else
 # error "Unsupported platform"

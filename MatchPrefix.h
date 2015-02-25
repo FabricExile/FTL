@@ -8,8 +8,6 @@
 #include <FTL/MatchPrefixChar.h>
 #include <FTL/MatchPrefixNever.h>
 #include <FTL/MatchPrefixOneOrMore.h>
-#include <FTL/MatchPrefixPos.h>
-#include <FTL/MatchPrefixRange.h>
 #include <FTL/MatchPrefixSeq.h>
 
 #endif //_FTL_MatchPrefix_h

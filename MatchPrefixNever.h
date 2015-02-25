@@ -5,14 +5,14 @@
 #ifndef _FTL_MatchPrefixNever_h
 #define _FTL_MatchPrefixNever_h
 
-#include <FTL/MatchPrefixRange.h>
+#include <FTL/StrRef.h>
 
 namespace FTL {
 
 struct MatchPrefixNever
 {
   MatchPrefixNever() {}
-  bool operator()( MatchPrefixRange &r  ) const
+  bool operator()( StrRef::IT &it, StrRef::IT itEnd  ) const
   {
     return false;
   }

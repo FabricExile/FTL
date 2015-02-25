@@ -5,14 +5,16 @@
 #ifndef _FTL_StrTrim_h
 #define _FTL_StrTrim_h
 
+#include <FTL/MatchCharSingle.h>
+
 #include <string>
 
 namespace FTL {
 
-template<typename FnMatch>
+template<typename MatchChar>
 void StrTrimLeft( std::string &str )
 {
-  FnMatch const mf;
+  MatchChar const mc;
 
   std::string::const_iterator const itBegin = str.begin();
   std::string::const_iterator const itEnd = str.end();
@@ -22,7 +24,7 @@ void StrTrimLeft( std::string &str )
   {
     if ( itLeft == itEnd )
       break;
-    if ( !mf( *itLeft ) )
+    if ( !mc( *itLeft ) )
       break;
     ++itLeft;
   }
@@ -34,10 +36,16 @@ void StrTrimLeft( std::string &str )
   }
 }
 
-template<typename FnMatch>
+template<char CharToMatch>
+void StrTrimLeft( std::string &str )
+{
+  StrTrimLeft< MatchCharSingle<CharToMatch> >( str );
+}
+
+template<typename MatchChar>
 void StrTrimRight( std::string &str )
 {
-  FnMatch const mf;
+  MatchChar const mc;
 
   std::string::const_iterator const itBegin = str.begin();
   std::string::const_iterator const itEnd = str.end();
@@ -47,7 +55,7 @@ void StrTrimRight( std::string &str )
   {
     if ( itRight == itBegin )
       break;
-    if ( !mf( *(itRight-1) ) )
+    if ( !mc( *(itRight-1) ) )
       break;
     --itRight;
   }
@@ -56,11 +64,23 @@ void StrTrimRight( std::string &str )
     str.resize( itRight - itBegin );
 }
 
-template<typename FnMatch>
+template<char CharToMatch>
+void StrTrimRight( std::string &str )
+{
+  StrTrimRight< MatchCharSingle<CharToMatch> >( str );
+}
+
+template<typename MatchChar>
 void StrTrim( std::string &str )
 {
-  StrTrimLeft<FnMatch>( str );
-  StrTrimRight<FnMatch>( str );
+  StrTrimLeft<MatchChar>( str );
+  StrTrimRight<MatchChar>( str );
+}
+
+template<char CharToMatch>
+void StrTrim( std::string &str )
+{
+  StrTrim< MatchCharSingle<CharToMatch> >( str );
 }
 
 } // namespace FTL

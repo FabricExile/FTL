@@ -5,7 +5,7 @@
 #ifndef _FTL_MatchPrefixOneOrMore_h
 #define _FTL_MatchPrefixOneOrMore_h
 
-#include <FTL/MatchPrefixRange.h>
+#include <FTL/StrRef.h>
 
 namespace FTL {
 
@@ -13,11 +13,11 @@ template<typename MatchPrefix>
 struct MatchPrefixOneOrMore
 {
   MatchPrefixOneOrMore() {}
-  bool operator()( MatchPrefixRange &r  ) const
+  bool operator()( StrRef::IT &it, StrRef::IT itEnd  ) const
   {
-    if ( !_mp( r ) )
+    if ( !_mp( it, itEnd ) )
       return false;
-    while ( _mp( r ) ) ;
+    while ( _mp( it, itEnd ) ) ;
     return true;
   }
 private:

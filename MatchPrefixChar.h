@@ -5,7 +5,7 @@
 #ifndef _FTL_MatchPrefixChar_h
 #define _FTL_MatchPrefixChar_h
 
-#include <FTL/MatchPrefixRange.h>
+#include <FTL/StrRef.h>
 
 namespace FTL {
 
@@ -13,11 +13,11 @@ template<typename MatchChar>
 struct MatchPrefixChar
 {
   MatchPrefixChar() {}
-  bool operator()( MatchPrefixRange &r  ) const
+  bool operator()( StrRef::IT &it, StrRef::IT itEnd ) const
   {
-    if ( !r.empty() && _matchChar( *r.b ) )
+    if ( it != itEnd && _matchChar( *it ) )
     {
-      ++r.b;
+      ++it;
       return true;
     }
     else return false;

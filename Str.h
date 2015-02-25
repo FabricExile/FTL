@@ -7,6 +7,7 @@
 
 #include <FTL/StrCount.h>
 #include <FTL/StrFilter.h>
+#include <FTL/StrRef.h>
 #include <FTL/StrRemap.h>
 #include <FTL/StrSplit.h>
 #include <FTL/StrTrim.h>

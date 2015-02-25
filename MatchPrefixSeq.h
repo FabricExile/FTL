@@ -5,7 +5,7 @@
 #ifndef _FTL_MatchPrefixSeq_h
 #define _FTL_MatchPrefixSeq_h
 
-#include <FTL/MatchPrefixRange.h>
+#include <FTL/StrRef.h>
 
 namespace FTL {
 
@@ -24,28 +24,57 @@ template<
 struct MatchPrefixSeq
 {
   MatchPrefixSeq() {}
-  bool operator()( MatchPrefixRange &r  ) const
+  bool operator()( StrRef::IT &it, StrRef::IT itEnd  ) const
   {
-    if ( !_0( r ) )
+    StrRef::IT itOrig = it;
+    if ( !_0( it, itEnd ) )
       return false;
-    if ( !_1( r ) )
+    if ( !_1( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_2( r ) )
+    }
+    if ( !_2( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_3( r ) )
+    }
+    if ( !_3( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_4( r ) )
+    }
+    if ( !_4( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_5( r ) )
+    }
+    if ( !_5( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_6( r ) )
+    }
+    if ( !_6( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_7( r ) )
+    }
+    if ( !_7( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_8( r ) )
+    }
+    if ( !_8( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
-    if ( !_9( r ) )
+    }
+    if ( !_9( it, itEnd ) )
+    {
+      it = itOrig;
       return false;
+    }
+    return true;
   }
 private:
   MatchPrefix0 _0;
