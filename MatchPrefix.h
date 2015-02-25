@@ -5,6 +5,7 @@
 #ifndef _FTL_MatchPrefix_h
 #define _FTL_MatchPrefix_h
 
+#include <FTL/MatchPrefixAny.h>
 #include <FTL/MatchPrefixChar.h>
 #include <FTL/MatchPrefixNever.h>
 #include <FTL/MatchPrefixOneOrMore.h>

@@ -227,7 +227,7 @@ inline bool FSDirAppendEntries(
   }
   ::closedir( dir );
 #elif defined(FTL_OS_WINDOWS)
-  std::string searchGlob = FSPathJoin( pathCStr, "*" );
+  std::string searchGlob = PathJoin( pathCStr, "*" );
 
   WIN32_FIND_DATAA fd;
   ::ZeroMemory( &fd, sizeof( fd ) );
