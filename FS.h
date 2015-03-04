@@ -59,13 +59,14 @@ inline bool FSStat(
 
   return true;
 #elif defined(FTL_PLATFORM_WINDOWS)
+
   DWORD fa = ::GetFileAttributesA( pathCStr );
   if ( fa == INVALID_FILE_ATTRIBUTES )
     return false;
 
   if ( fa & FILE_ATTRIBUTE_DIRECTORY )
     statInfo.type = FSStatInfo::Dir;
-  else if ( fa & FILE_ATTRIBUTE_NORMAL )
+  else if ( fa & FILE_ATTRIBUTE_NORMAL || fa & FILE_ATTRIBUTE_ARCHIVE )
     statInfo.type = FSStatInfo::File;
   else
     statInfo.type = FSStatInfo::Other;
@@ -237,9 +238,6 @@ inline bool FSDirAppendEntries(
     return false;
   do
   {
-    if( !( fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ) )
-      continue;
-
     // [pzion 20130723] Skip . and ..
     char const *entryCStr = fd.cFileName;
     if ( entryCStr[0] == '.'
