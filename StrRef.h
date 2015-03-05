@@ -61,11 +61,11 @@ public:
   }
 
   char front() const { return (*this)[0]; }
-  StrRef drop_front( size_t count ) const
+  StrRef drop_front( size_t count = 1 ) const
     { return StrRef( begin() + count, end() ); }
 
   char back() const { return (*this)[0]; }
-  StrRef drop_back( size_t count ) const
+  StrRef drop_back( size_t count = 1 ) const
     { return StrRef( begin(), end() - count ); }
 
   IT find( IT b, IT e, char ch ) const
