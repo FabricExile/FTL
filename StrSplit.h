@@ -45,6 +45,38 @@ void StrSplit(
   StrSplit< MatchCharSingle<CharToMatch> >( strRef, list, strict );
 }
 
+template<typename MatchChar>
+void StrSplit(
+  StrRef strRef,
+  std::vector<StrRef> &list,
+  bool strict = false
+  )
+{
+  MatchChar const mc;
+
+  StrRef::IT itBegin = strRef.begin();
+  StrRef::IT const itEnd = strRef.end();
+  for (;;)
+  {
+    StrRef::IT it = strRef.find<MatchChar>( itBegin, itEnd );
+    if ( strict || it != itBegin )
+      list.push_back( StrRef( itBegin, it ) );
+    if ( it == itEnd )
+      break;
+    itBegin = it + 1;
+  }
+}
+
+template<char CharToMatch>
+void StrSplit(
+  StrRef strRef,
+  std::vector<StrRef> &list,
+  bool strict = false
+  )
+{
+  StrSplit< MatchCharSingle<CharToMatch> >( strRef, list, strict );
+}
+
 } // namespace FTL
 
 #endif //_FTL_StrSplit_h

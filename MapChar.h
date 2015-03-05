@@ -5,6 +5,7 @@
 #ifndef _FTL_MapChar_h
 #define _FTL_MapChar_h
 
+#include <FTL/MapCharSingle.h>
 #include <FTL/MapCharToLower.h>
 #include <FTL/MapCharToUpper.h>
 
