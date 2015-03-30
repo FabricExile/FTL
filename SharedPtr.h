@@ -42,6 +42,9 @@ private:
 template<class ShareableTy>
 class SharedPtr
 {
+  template<class OtherShareableTy>
+  friend class SharedPtr;
+
   void init( ShareableTy *shareable )
   {
     m_shareable = shareable;
@@ -168,6 +171,15 @@ public:
   {
     return m_shareable < that.m_shareable;
   }
+
+  template<class OtherShareableTy>
+  static SharedPtr<ShareableTy> StaticCast( SharedPtr<OtherShareableTy> const &that )
+  {
+    ShareableTy *shareable = static_cast<ShareableTy *>( that.m_shareable );
+    return SharedPtr<ShareableTy>( shareable );
+  }
+
+private:
 
   ShareableTy *m_shareable;
 };
