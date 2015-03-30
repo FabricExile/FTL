@@ -169,8 +169,6 @@ public:
     return m_shareable < that.m_shareable;
   }
 
-private:
-
   ShareableTy *m_shareable;
 };
 
