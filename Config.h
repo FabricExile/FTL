@@ -68,4 +68,10 @@ static inline float roundf( float x ) { return floorf(x+0.5f); }
 # define FTL_BUILD_DEBUG
 #endif
 
+#ifndef _MSC_VER
+# define FTL_NOEXCEPT noexcept
+#else
+# define FTL_NOEXCEPT
+#endif
+
 #endif // _FTL_Config_h
