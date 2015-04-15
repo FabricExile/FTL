@@ -5,13 +5,14 @@
 #ifndef _FTL_StrSplit_h
 #define _FTL_StrSplit_h
 
+#include <FTL/Config.h>
 #include <FTL/MatchCharSingle.h>
 #include <FTL/StrRef.h>
 
 #include <string>
 #include <vector>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<typename MatchChar>
 void StrSplit(
@@ -77,6 +78,6 @@ void StrSplit(
   StrSplit< MatchCharSingle<CharToMatch> >( strRef, list, strict );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_StrSplit_h

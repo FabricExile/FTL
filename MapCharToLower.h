@@ -5,7 +5,9 @@
 #ifndef _FTL_MapCharToLower_h
 #define _FTL_MapCharToLower_h
 
-namespace FTL {
+#include <FTL/Config.h>
+
+FTL_NAMESPACE_BEGIN
 
 struct MapCharToLower
 {
@@ -21,6 +23,6 @@ struct MapCharToLower
   }
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MapCharToLower_h

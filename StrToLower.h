@@ -5,16 +5,17 @@
 #ifndef _FTL_StrToLower_h
 #define _FTL_StrToLower_h
 
+#include <FTL/Config.h>
 #include <FTL/MapCharToLower.h>
 #include <FTL/StrRemap.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 inline void StrToLower( std::string &str )
 {
   StrRemap<MapCharToLower>( str );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_StrToLower_h

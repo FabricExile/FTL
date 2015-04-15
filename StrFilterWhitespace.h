@@ -5,10 +5,11 @@
 #ifndef _FTL_StrFilterWhitespace_h
 #define _FTL_StrFilterWhitespace_h
 
+#include <FTL/Config.h>
 #include <FTL/MatchCharWhitespace.h>
 #include <FTL/StrFilter.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 inline std::string StrFilterWhitespace( char const *cStr )
 {
@@ -20,6 +21,6 @@ inline std::string StrFilterWhitespace( std::string const &str )
   return StrFilter<MatchCharWhitespace>( str );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_StrFilterWhitespace_h

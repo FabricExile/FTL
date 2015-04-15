@@ -5,11 +5,12 @@
 #ifndef _FTL_StrTrim_h
 #define _FTL_StrTrim_h
 
+#include <FTL/Config.h>
 #include <FTL/MatchCharSingle.h>
 
 #include <string>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<typename MatchChar>
 void StrTrimLeft( std::string &str )
@@ -83,6 +84,6 @@ void StrTrim( std::string &str )
   StrTrim< MatchCharSingle<CharToMatch> >( str );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_StrTrim_h

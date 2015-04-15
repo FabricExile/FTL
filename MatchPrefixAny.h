@@ -5,10 +5,11 @@
 #ifndef _FTL_MatchPrefixAny_h
 #define _FTL_MatchPrefixAny_h
 
+#include <FTL/Config.h>
 #include <FTL/MatchPrefixNever.h>
 #include <FTL/StrRef.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<
   typename MatchPrefix0,
@@ -62,6 +63,6 @@ private:
   MatchPrefix9 _9;
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MatchPrefixAny_h

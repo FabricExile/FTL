@@ -5,7 +5,9 @@
 #ifndef _FTL_MatchCharRange_h
 #define _FTL_MatchCharRange_h
 
-namespace FTL {
+#include <FTL/Config.h>
+
+FTL_NAMESPACE_BEGIN
 
 template<char BeginCharToMatch, char EndCharToMatch>
 struct MatchCharRange
@@ -17,6 +19,6 @@ struct MatchCharRange
   }
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MatchCharRange_h

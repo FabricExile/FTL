@@ -25,7 +25,7 @@
 # error "Unsupport FTL_PLATFORM_..."
 #endif
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 struct FSStatInfo
 {
@@ -274,6 +274,6 @@ inline bool FSDirAppendEntries(
   return FSDirAppendEntries( pathCStr, entries );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_FS_h

@@ -5,7 +5,9 @@
 #ifndef _FTL_MatchCharAlways_h
 #define _FTL_MatchCharAlways_h
 
-namespace FTL {
+#include <FTL/Config.h>
+
+FTL_NAMESPACE_BEGIN
 
 struct MatchCharAlways
 {
@@ -16,6 +18,6 @@ struct MatchCharAlways
   }
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MatchCharAlways_h

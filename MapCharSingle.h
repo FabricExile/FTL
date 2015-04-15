@@ -5,7 +5,9 @@
 #ifndef _FTL_MapCharSingle_h
 #define _FTL_MapCharSingle_h
 
-namespace FTL {
+#include <FTL/Config.h>
+
+FTL_NAMESPACE_BEGIN
 
 template<char SrcChar, char DstChar>
 struct MapCharSingle
@@ -19,6 +21,6 @@ struct MapCharSingle
   }
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MapCharSingle_h

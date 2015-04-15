@@ -5,7 +5,9 @@
 #ifndef _FTL_MapCharToUpper_h
 #define _FTL_MapCharToUpper_h
 
-namespace FTL {
+#include <FTL/Config.h>
+
+FTL_NAMESPACE_BEGIN
 
 struct MapCharToUpper
 {
@@ -21,6 +23,6 @@ struct MapCharToUpper
   }
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MapCharToUpper_h

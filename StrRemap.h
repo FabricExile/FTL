@@ -5,9 +5,11 @@
 #ifndef _FTL_StrRemap_h
 #define _FTL_StrRemap_h
 
+#include <FTL/Config.h>
+
 #include <string>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<typename FnMap>
 void StrRemap( std::string &str )
@@ -20,6 +22,6 @@ void StrRemap( std::string &str )
     *it = mf( *it );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_StrRemap_h

@@ -5,11 +5,12 @@
 #ifndef _FTL_StrCount_h
 #define _FTL_StrCount_h
 
+#include <FTL/Config.h>
 #include <FTL/MatchCharSingle.h>
 
 #include <string>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<typename MatchChar>
 size_t StrCount( char const *cStr )
@@ -43,6 +44,6 @@ size_t StrCount( std::string const &str )
   return StrCount< MatchCharSingle<CharToMatch> >( str );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_StrCount_h

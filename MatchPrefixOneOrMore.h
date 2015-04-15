@@ -5,9 +5,10 @@
 #ifndef _FTL_MatchPrefixOneOrMore_h
 #define _FTL_MatchPrefixOneOrMore_h
 
+#include <FTL/Config.h>
 #include <FTL/StrRef.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<typename MatchPrefix>
 struct MatchPrefixOneOrMore
@@ -24,6 +25,6 @@ private:
   MatchPrefix _mp;
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MatchPrefixOneOrMore_h

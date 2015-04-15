@@ -5,9 +5,10 @@
 #ifndef _FTL_MatchCharAny_h
 #define _FTL_MatchCharAny_h
 
+#include <FTL/Config.h>
 #include <FTL/MatchCharNever.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<
   typename MatchChar0,
@@ -42,6 +43,6 @@ private:
   MatchChar9 _9;
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MatchCharAny_h

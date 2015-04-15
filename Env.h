@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 #if defined(FTL_PLATFORM_POSIX)
 static const char EnvListSep = ':';
@@ -36,6 +36,6 @@ inline bool EnvGetList(
   return true;
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_Env_h

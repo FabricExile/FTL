@@ -74,4 +74,11 @@ static inline float roundf( float x ) { return floorf(x+0.5f); }
 # define FTL_NOEXCEPT
 #endif
 
+#if !defined(FTL_NAMESPACE)
+# define FTL_NAMESPACE FTL
+#endif
+
+#define FTL_NAMESPACE_BEGIN namespace FTL_NAMESPACE {
+#define FTL_NAMESPACE_END   }
+
 #endif // _FTL_Config_h

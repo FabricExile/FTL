@@ -5,6 +5,8 @@
 #ifndef _FTL_MatchCharWhitespace_h
 #define _FTL_MatchCharWhitespace_h
 
+#include <FTL/Config.h>
+
 #include <ctype.h>
 
 namespace FTL {

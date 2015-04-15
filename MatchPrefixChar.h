@@ -5,9 +5,10 @@
 #ifndef _FTL_MatchPrefixChar_h
 #define _FTL_MatchPrefixChar_h
 
+#include <FTL/Config.h>
 #include <FTL/StrRef.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<typename MatchChar>
 struct MatchPrefixChar
@@ -26,6 +27,6 @@ private:
   MatchChar _matchChar;
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MatchPrefixChar_h

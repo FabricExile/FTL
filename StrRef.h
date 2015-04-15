@@ -5,11 +5,13 @@
 #ifndef _FTL_StrRef_h
 #define _FTL_StrRef_h
 
+#include <FTL/Config.h>
+
 #include <assert.h>
 #include <string>
 #include <string.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 class StrRef
 {
@@ -152,7 +154,7 @@ public:
   }
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 inline std::string &operator+=( std::string &stdString, FTL::StrRef strRef )
 {

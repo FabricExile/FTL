@@ -5,9 +5,10 @@
 #ifndef _FTL_StrFilter_h
 #define _FTL_StrFilter_h
 
+#include <FTL/Config.h>
 #include <string>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<typename MatchChar>
 std::string StrFilter( char const *cStr )
@@ -32,6 +33,6 @@ std::string StrFilter( std::string const &str )
   return StrFilter<MatchChar>( str.c_str() );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_StrFilter_h
