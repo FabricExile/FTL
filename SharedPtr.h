@@ -7,7 +7,7 @@
 
 #include <FTL/Config.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 template<class ShareableTy>
 class SharedPtr;
@@ -184,6 +184,6 @@ private:
   ShareableTy *m_shareable;
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_SharedPtr_h

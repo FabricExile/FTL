@@ -148,6 +148,51 @@ public:
         );
   }
 
+  bool equals( StrRef that ) const
+    { return _size == that._size
+      && memcmp( _data, that._data, _size ) == 0; }
+
+  bool operator==( StrRef that ) const
+    { return equals( that ); }
+
+  bool operator!=( StrRef that ) const
+    { return equals( that ); }
+
+  int compare( StrRef that ) const
+  {
+    size_t minSize = std::min( _size, that._size );
+    int result = memcmp( _data, that._data, minSize );
+    if ( result != 0 )
+      return result;
+    if ( _size < that._size )
+      return -1;
+    if ( _size > that._size )
+      return 1;
+    return 0;
+  }
+
+  int operator<( StrRef that ) const
+    { return compare( that ) < 0; }
+
+  int operator<=( StrRef that ) const
+    { return compare( that ) <= 0; }
+
+  int operator>( StrRef that ) const
+    { return compare( that ) > 0; }
+
+  int operator>=( StrRef that ) const
+    { return compare( that ) >= 0; }
+
+  size_t hash() const
+  {
+    // [pzion 20150415] DJB2 algorithm
+    size_t result = 5381;
+    char const *pEnd = _data + _size;
+    for ( char const *p = _data; p != pEnd; ++p )
+      result = ((result << 5) + result) + size_t(*p);
+    return result;
+  }
+
   operator std::string() const
   {
     return std::string( begin(), end() );

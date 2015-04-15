@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <string>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 #if defined(FTL_PLATFORM_POSIX)
 static const char PathSep = '/';
@@ -76,6 +76,6 @@ inline bool PathIsAbsolute( StrRef path )
   return MatchPrefixAbsolutePath()( it, path.end() );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_Path_h

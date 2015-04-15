@@ -9,7 +9,7 @@
 
 #include <ctype.h>
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 struct MatchCharWhitespace
 {
@@ -20,6 +20,6 @@ struct MatchCharWhitespace
   }
 };
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_MatchCharWhitespace_h

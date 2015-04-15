@@ -19,7 +19,7 @@
 # error "Unsupported OS"
 #endif
 
-namespace FTL {
+FTL_NAMESPACE_BEGIN
 
 inline uint64_t GetCurrentTicks()
 {
@@ -66,6 +66,6 @@ inline double GetSecondsBetweenTicks( uint64_t start, uint64_t end )
   return GetSecondsForTicksDiff( end - start );
 }
 
-} // namespace FTL
+FTL_NAMESPACE_END
 
 #endif //_FTL_Ticks_h
