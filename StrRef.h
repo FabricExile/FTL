@@ -7,6 +7,7 @@
 
 #include <FTL/Config.h>
 
+#include <algorithm>
 #include <assert.h>
 #include <string>
 #include <string.h>
