@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <iostream>
 #include <string>
 #include <string.h>
 
@@ -208,9 +209,16 @@ public:
 
 FTL_NAMESPACE_END
 
-inline std::string &operator+=( std::string &stdString, FTL::StrRef strRef )
+inline std::string &operator+=( std::string &stdString, FTL::StrRef str )
 {
-  return stdString.append( strRef.begin(), strRef.end() );
+  return stdString.append( str.begin(), str.end() );
+}
+
+inline std::ostream &operator<<( std::ostream &os, FTL::StrRef str )
+{
+  for ( FTL::StrRef::IT it = str.begin(); it != str.end(); ++it )
+    os << *it;
+  return os;
 }
 
 #define FTL_STR(x) (::FTL::StrRef( (x), (sizeof(x) - 1) ))

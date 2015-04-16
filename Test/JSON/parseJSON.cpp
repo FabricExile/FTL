@@ -74,23 +74,23 @@ void displayEntity(
   switch ( entity.getType() )
   {
     case FTL::JSONEntity::Type_Null:
-      std::cout << "NULL\n";
+      std::cout << FTL_STR("NULL\n");
       break;
     case FTL::JSONEntity::Type_Boolean:
-      std::cout << "BOOLEAN ";
+      std::cout << FTL_STR("BOOLEAN ");
       std::cout << (entity.booleanValue()? "true": "false");
       std::cout << '\n';
       break;
     case FTL::JSONEntity::Type_Int32:
     {
-      std::cout << "INTEGER ";
+      std::cout << FTL_STR("INTEGER ");
       std::cout << entity.int32Value();
       std::cout << '\n';
     }
     break;
     case FTL::JSONEntity::Type_Float64:
     {
-      std::cout << "SCALAR ";
+      std::cout << FTL_STR("SCALAR ");
       std::cout << entity.float64Value();
       std::cout << '\n';
       break;
@@ -103,7 +103,7 @@ void displayEntity(
       std::string quotedString;
       AppendQuotedString( string, quotedString );
 
-      std::cout << "STRING ";
+      std::cout << FTL_STR("STRING ");
       std::cout << entity.stringLength();
       std::cout << " ";
       std::cout << quotedString;
@@ -112,7 +112,7 @@ void displayEntity(
     }
     case FTL::JSONEntity::Type_Object:
     {
-      std::cout << "OBJECT " << entity.objectSize() << '\n';
+      std::cout << FTL_STR("OBJECT ") << entity.objectSize() << '\n';
       FTL::JSONObjectDecoder jod( entity );
       FTL::JSONEntity key, value;
       while ( jod.getNext( key, value ) )
@@ -124,7 +124,7 @@ void displayEntity(
     break;
     case FTL::JSONEntity::Type_Array:
     {
-      std::cout << "ARRAY " << entity.arraySize() << '\n';
+      std::cout << FTL_STR("ARRAY ") << entity.arraySize() << '\n';
       FTL::JSONArrayDecoder jad( entity );
       FTL::JSONEntity element;
       while ( jad.getNext( element ) )
