@@ -33,10 +33,16 @@ public:
 
   StrRef() : _data(0), _size(0) {}
   StrRef( char const *cStr )
+    : _data( cStr )
+    , _size( cStr? strlen( cStr ): 0 )
   {
-    assert( cStr );
-    _data = cStr;
-    _size = strlen( cStr );
+    assert( _size == 0 || !!_data );
+  }
+  StrRef( char const *data, size_t size )
+    : _data( data )
+    , _size( size )
+  {
+    assert( _size == 0 || !!_data );
   }
   StrRef( std::string const &str ) :
     _data( str.data() ), _size( str.size() ) {}
@@ -206,5 +212,7 @@ inline std::string &operator+=( std::string &stdString, FTL::StrRef strRef )
 {
   return stdString.append( strRef.begin(), strRef.end() );
 }
+
+#define FTL_STR(x) (::FTL::StrRef( (x), (sizeof(x) - 1) ))
 
 #endif //_FTL_StrRef_h
