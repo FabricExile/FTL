@@ -1,0 +1,87 @@
+1:1 OBJECT 0
+2:1 OBJECT 1
+  2:2 STRING 4 'fred'
+    2:9 INTEGER 17
+3:1 OBJECT 4
+  3:2 STRING 4 'fred'
+    3:9 STRING 3 'joe'
+  3:15 STRING 3 'joe'
+    3:21 STRING 4 'fred'
+  3:28 STRING 3 'foo'
+    3:34 NULL
+  3:39 STRING 3 'bar'
+    3:45 BOOLEAN false
+4:1 OBJECT 2
+  4:2 STRING 4 'fred'
+    4:9 OBJECT 1
+      4:10 STRING 3 'joe'
+        4:16 ARRAY 3
+          4:17 INTEGER 4
+          4:19 OBJECT 2
+            4:20 STRING 3 'bar'
+              4:26 ARRAY 2
+                4:27 NULL
+                4:32 SCALAR 4.5
+            4:37 STRING 1 'a'
+              4:41 OBJECT 1
+                4:42 STRING 1 '5'
+                  4:46 INTEGER 42
+          4:51 ARRAY 3
+            4:52 INTEGER 4
+            4:54 SCALAR 6.8
+            4:58 BOOLEAN true
+  4:66 STRING 3 'joe'
+    4:72 ARRAY 3
+      4:73 SCALAR 5.6
+      4:77 INTEGER 9
+      4:79 ARRAY 1
+        4:80 OBJECT 1
+          4:81 STRING 4 'fred'
+            4:88 STRING 0 ''
+5:1 OBJECT 23
+  5:2 STRING 7 'vampire'
+    5:12 INTEGER 1
+  5:14 STRING 5 'diary'
+    5:22 INTEGER 1
+  5:24 STRING 7 'fanlist'
+    5:34 INTEGER 1
+  5:36 STRING 5 'visit'
+    5:44 INTEGER 10
+  5:47 STRING 7 'vanessa'
+    5:57 INTEGER 1
+  5:59 STRING 7 'hudgens'
+    5:69 INTEGER 1
+  5:71 STRING 9 'airbender'
+    5:83 INTEGER 1
+  5:85 STRING 6 'stacey'
+    5:94 INTEGER 1
+  5:96 STRING 7 'soloman'
+    5:106 INTEGER 1
+  5:108 STRING 4 'jake'
+    5:115 INTEGER 1
+  5:117 STRING 10 'gyllenhaal'
+    5:130 INTEGER 1
+  5:132 STRING 4 'nina'
+    5:139 INTEGER 1
+  5:141 STRING 6 'dobrev'
+    5:150 INTEGER 1
+  5:152 STRING 6 'justin'
+    5:161 INTEGER 1
+  5:163 STRING 6 'bieber'
+    5:172 INTEGER 1
+  5:174 STRING 5 'scout'
+    5:182 INTEGER 1
+  5:184 STRING 7 'compton'
+    5:194 INTEGER 1
+  5:196 STRING 6 'ashley'
+    5:205 INTEGER 1
+  5:207 STRING 6 'greene'
+    5:216 INTEGER 1
+  5:218 STRING 6 'eleven'
+    5:227 INTEGER 1
+  5:229 STRING 3 'amy'
+    5:235 INTEGER 1
+  5:237 STRING 5 'aston'
+    5:245 INTEGER 1
+  5:247 STRING 9 'merrygold'
+    5:259 INTEGER 1

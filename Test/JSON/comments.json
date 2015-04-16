@@ -1,0 +1,2 @@
+{"foo": //line comment
+  true, /*block comment*/"bar":false}

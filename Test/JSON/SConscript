@@ -1,0 +1,96 @@
+#
+# Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+#
+
+import os, subprocess, re, json
+Import('parentEnv')
+
+env = parentEnv.CloneSubStage('JSON')
+
+parseJSON = env.Program('parseJSON.cpp')
+
+def jsonTestEmitter(target, source, env):
+  outputBase = source[0].srcnode().abspath[:-5]
+  baseFile = '.'.join([outputBase, 'json'])
+  if not os.path.exists(baseFile):
+    return None,None
+  
+  outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], env['FABRIC_BUILD_ARCH'], 'out'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], 'out'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, 'out'])
+  if not os.path.exists(outputFile):
+    print "*** WARNING: Skipping test " + str(baseFile) + " since it is missing an expected output"
+    return None,None
+  
+  source.append(outputFile)
+  source.append(parseJSON)
+  return target, source
+
+def jsonTestCallback(target, source, env):
+  jsonFile = os.path.basename(source[0].abspath)
+  
+  base = source[0].srcnode().abspath[:-5]
+  if os.path.exists('.'.join([base,env['FABRIC_BUILD_OS'],'skip']))\
+    or os.path.exists('.'.join([base,'skip'])):
+    print "Skip " + jsonFile
+    return None
+
+  envFilename = '.'.join([base,'env'])
+  if os.path.exists(envFilename):
+    with open (envFilename, "r") as envFile:
+      envVars = json.load(envFile)
+  else:
+    envVars = {}
+  env = os.environ.copy()
+  for k, v in envVars.iteritems():
+    env[k] = v
+  
+  actualFile = open(target[0].abspath, 'w')
+  try:
+    subprocess.call(
+      [str(parseJSON[0]), str(source[0])],
+      stdout = actualFile,
+      stderr = actualFile,
+      env = env
+    )
+  except:
+    pass
+  actualFile.close()
+  
+  expectedFile = open(source[1].abspath, 'r')
+  expectedContents = expectedFile.read()
+  expectedFile.close()
+  
+  actualFile = open(target[0].abspath, 'r')
+  actualContents = actualFile.read()
+  actualFile.close()
+  
+  if expectedContents != actualContents:
+    print "FAIL " + jsonFile
+    subprocess.call(
+      ['diff', '-u', source[1].abspath, target[0].abspath]
+    )
+    return 1
+  else:
+    print "PASS " + jsonFile
+    return None
+jsonTestAction = env.Action(jsonTestCallback, None)
+env.Append(BUILDERS = {
+  "jsonTest": Builder(
+    action = jsonTestAction,
+    suffix = '.test-result',
+    src_suffix = '.json',
+    emitter = jsonTestEmitter
+  )
+})
+
+jsonTests = []
+for jsonFile in env.Glob('*.json'):
+  thisJSONTests = [];
+  thisJSONTests.append(env.AlwaysBuild(env.NoCache(env.jsonTest(jsonFile))))
+  Alias(os.path.basename(str(jsonFile)), thisJSONTests)
+  jsonTests += thisJSONTests
+Alias('test-ftl-json', jsonTests)
+Return('jsonTests')

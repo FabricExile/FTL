@@ -1,0 +1,8 @@
+1:1 STRING 0 ''
+2:1 STRING 4 'fred'
+3:1 STRING 55 'a much longer string that won\'t fit into the short data'
+4:1 STRING 8 '"/\\\b\f\n\t\r'
+5:1 STRING 6 'piqué'
+6:1 STRING 6 'piqué'
+6:9 STRING 7 'traling'
+7:1 STRING 20 'single-quoted string'

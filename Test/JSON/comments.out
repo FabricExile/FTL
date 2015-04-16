@@ -1,0 +1,5 @@
+1:1 OBJECT 2
+  1:2 STRING 3 'foo'
+    2:3 BOOLEAN true
+  2:26 STRING 3 'bar'
+    2:32 BOOLEAN false

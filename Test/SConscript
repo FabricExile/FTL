@@ -1,0 +1,13 @@
+#
+# Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+#
+
+Import('parentEnv')
+ftlTests = SConscript(
+  dirs = [
+    'JSON',
+    ],
+  exports={'parentEnv': parentEnv}
+  )
+Alias('test-ftl', ftlTests)
+Export('ftlTests')

@@ -1,0 +1,10 @@
+1:1 ARRAY 0
+2:1 ARRAY 4
+  2:2 INTEGER 43
+  2:5 SCALAR 7980
+  2:13 STRING 2 '"]'
+  2:19 OBJECT 1
+    2:20 STRING 4 'fred'
+      2:27 ARRAY 2
+        2:28 INTEGER 5
+        2:30 INTEGER 6
