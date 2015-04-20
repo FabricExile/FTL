@@ -45,6 +45,17 @@ inline std::string PathJoin(
   return result;
 }
 
+inline std::string PathNorm( StrRef path )
+{
+  std::string result(path.begin(), path.end());
+  for(unsigned int i=0;i<result.length(); i++)
+  {
+    if(result[i] == '/' || result[i] == '\\')
+      result[i] = PathSep;
+  }
+  return result;
+}
+
 inline std::pair<StrRef, StrRef> PathSplit( StrRef path )
 {
   return path.rsplit( PathSep );
