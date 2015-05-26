@@ -74,8 +74,7 @@ typedef
           MatchCharRange<'a', 'z'>
           >
         >,
-      MatchPrefixChar< MatchCharSingle<':'> >,
-      MatchPrefixChar< MatchCharSingle<PathSep> >
+      MatchPrefixChar< MatchCharSingle<':'> >
       >
     >
 #endif
