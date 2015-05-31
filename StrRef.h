@@ -160,6 +160,12 @@ public:
     { return _size == that._size
       && memcmp( _data, that._data, _size ) == 0; }
 
+  struct Equals
+  {
+    bool operator ()( StrRef lhs, StrRef rhs ) const
+      { return lhs.equals( rhs ); }
+  };
+
   bool operator==( StrRef that ) const
     { return equals( that ); }
 
@@ -200,6 +206,12 @@ public:
       result = ((result << 5) + result) + size_t(*p);
     return result;
   }
+
+  struct Hash
+  {
+    size_t operator ()( StrRef str ) const
+      { return str.hash(); }
+  };
 
   operator std::string() const
   {

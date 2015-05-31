@@ -7,28 +7,26 @@ Import('parentEnv')
 
 env = parentEnv.CloneSubStage('JSON')
 
-parseJSON = env.Program('parseJSON.cpp')
-
-def jsonTestEmitter(target, source, env):
+def jsonTestEmitter(target, source, env, toolName, toolExec):
   outputBase = source[0].srcnode().abspath[:-5]
   baseFile = '.'.join([outputBase, 'json'])
   if not os.path.exists(baseFile):
     return None,None
   
-  outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], env['FABRIC_BUILD_ARCH'], 'out'])
+  outputFile = '.'.join([outputBase, toolName, env['FABRIC_BUILD_OS'], env['FABRIC_BUILD_ARCH'], 'out'])
   if not os.path.exists(outputFile):
-    outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], 'out'])
+    outputFile = '.'.join([outputBase, toolName, env['FABRIC_BUILD_OS'], 'out'])
   if not os.path.exists(outputFile):
-    outputFile = '.'.join([outputBase, 'out'])
+    outputFile = '.'.join([outputBase, toolName, 'out'])
   if not os.path.exists(outputFile):
     print "*** WARNING: Skipping test " + str(baseFile) + " since it is missing an expected output"
     return None,None
   
   source.append(outputFile)
-  source.append(parseJSON)
+  source.append(toolExec)
   return target, source
 
-def jsonTestCallback(target, source, env):
+def jsonTestCallback(target, source, env, toolName, toolExec):
   jsonFile = os.path.basename(source[0].abspath)
   
   base = source[0].srcnode().abspath[:-5]
@@ -50,7 +48,7 @@ def jsonTestCallback(target, source, env):
   actualFile = open(target[0].abspath, 'w')
   try:
     subprocess.call(
-      [str(parseJSON[0]), str(source[0])],
+      [str(toolExec[0]), str(source[0])],
       stdout = actualFile,
       stderr = actualFile,
       env = env
@@ -68,28 +66,52 @@ def jsonTestCallback(target, source, env):
   actualFile.close()
   
   if expectedContents != actualContents:
-    print "FAIL " + jsonFile
+    print "FAIL [" + toolName + "] " + jsonFile
     subprocess.call(
       ['diff', '-u', source[1].abspath, target[0].abspath]
     )
     return 1
   else:
-    print "PASS " + jsonFile
+    print "PASS [" + toolName + "] " + jsonFile
     return None
-jsonTestAction = env.Action(jsonTestCallback, None)
+
+parseJSON = env.Program('parseJSON.cpp')
+Alias('parseJSON', parseJSON)
+def parseJSONTestEmitter(target, source, env):
+  return jsonTestEmitter(target, source, env, "parse", parseJSON)
+def parseJSONTestCallback(target, source, env):
+  return jsonTestCallback(target, source, env, "parse", parseJSON)
+parseJSONTestAction = env.Action(parseJSONTestCallback, None)
 env.Append(BUILDERS = {
-  "jsonTest": Builder(
-    action = jsonTestAction,
-    suffix = '.test-result',
+  "parseJSONTest": Builder(
+    action = parseJSONTestAction,
+    suffix = '.parse.test-result',
     src_suffix = '.json',
-    emitter = jsonTestEmitter
-  )
-})
+    emitter = parseJSONTestEmitter
+    )
+  })
+
+catJSON = env.Program('catJSON.cpp')
+Alias('catJSON', catJSON)
+def catJSONTestEmitter(target, source, env):
+  return jsonTestEmitter(target, source, env, "cat", catJSON)
+def catJSONTestCallback(target, source, env):
+  return jsonTestCallback(target, source, env, "cat", catJSON)
+catJSONTestAction = env.Action(catJSONTestCallback, None)
+env.Append(BUILDERS = {
+  "catJSONTest": Builder(
+    action = catJSONTestAction,
+    suffix = '.cat.test-result',
+    src_suffix = '.json',
+    emitter = catJSONTestEmitter
+    )
+  })
 
 jsonTests = []
 for jsonFile in env.Glob('*.json'):
   thisJSONTests = [];
-  thisJSONTests.append(env.AlwaysBuild(env.NoCache(env.jsonTest(jsonFile))))
+  thisJSONTests.append(env.AlwaysBuild(env.NoCache(env.parseJSONTest(jsonFile))))
+  thisJSONTests.append(env.AlwaysBuild(env.NoCache(env.catJSONTest(jsonFile))))
   Alias(os.path.basename(str(jsonFile)), thisJSONTests)
   jsonTests += thisJSONTests
 Alias('test-ftl-json', jsonTests)

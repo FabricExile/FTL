@@ -2,10 +2,11 @@
  *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_JSONDecoder_h
-#define _FTL_JSONDecoder_h
+#ifndef _FTL_JSONDec_h
+#define _FTL_JSONDec_h
 
 #include <FTL/Config.h>
+#include <FTL/JSONException.h>
 #include <FTL/StrRef.h>
 
 #include <algorithm>
@@ -14,15 +15,17 @@
 
 FTL_NAMESPACE_BEGIN
 
-static const uint32_t JSONDecoderShortStringMaxLength = 16;
+static const uint32_t JSONDecShortStringMaxLength = 16;
 
-class JSONObjectDecoder;
-class JSONArrayDecoder;
+class JSONDec;
+class JSONObjectDec;
+class JSONArrayDec;
 
-class JSONEntity
+class JSONEnt
 {
-  friend class JSONObjectDecoder;
-  friend class JSONArrayDecoder;
+  friend class JSONDec;
+  friend class JSONObjectDec;
+  friend class JSONArrayDec;
 
 public:
 
@@ -38,15 +41,7 @@ public:
     Type_Array
   };
 
-  static bool Consume(
-    StrRef &str,
-    uint32_t &line,
-    uint32_t &column,
-    char const *&error,
-    JSONEntity &entity
-    );
-
-  JSONEntity()
+  JSONEnt()
     : type( Type_Undefined ) {}
 
   Type getType() const
@@ -61,7 +56,7 @@ public:
   uint32_t getColumn() const
     { return column; }
 
-  void copyFrom( JSONEntity const &that )
+  void copyFrom( JSONEnt const &that )
   {
     rawStr = that.rawStr;
     switch ( (type = that.type) )
@@ -80,7 +75,7 @@ public:
       memcpy(
         value.string.shortData,
         that.value.string.shortData,
-        std::min( value.string.length, JSONDecoderShortStringMaxLength )
+        std::min( value.string.length, JSONDecShortStringMaxLength )
         );
       break;
     case Type_Object:
@@ -94,10 +89,10 @@ public:
     }
   }
 
-  JSONEntity( JSONEntity const &that )
+  JSONEnt( JSONEnt const &that )
     { copyFrom( that ); }
 
-  JSONEntity &operator=( JSONEntity const &that )
+  JSONEnt &operator=( JSONEnt const &that )
   {
     copyFrom( that );
     return *this;
@@ -166,7 +161,7 @@ public:
   bool stringIsShort() const
   {
     assert( isString() );
-    return stringLength() <= JSONDecoderShortStringMaxLength;
+    return stringLength() <= JSONDecShortStringMaxLength;
   }
 
   char const *stringShortData() const
@@ -191,10 +186,10 @@ public:
       return false;
     if ( memcmp(
       str.data(), value.string.shortData,
-      std::min( str.size(), size_t(JSONDecoderShortStringMaxLength) )
+      std::min( str.size(), size_t(JSONDecShortStringMaxLength) )
       ) != 0 )
       return false;
-    if ( value.string.length > JSONDecoderShortStringMaxLength )
+    if ( value.string.length > JSONDecShortStringMaxLength )
       return stringIs_Long( str );
     else return true;
   }
@@ -241,36 +236,47 @@ protected:
     uint32_t &column
     );
 
-  static bool ConsumeHex(
+  static void ConsumeEntity(
     StrRef &str,
     uint32_t &line,
     uint32_t &column,
-    char const *&error,
+    JSONEnt &ent
+    );
+
+  static void ConsumeString(
+    StrRef &str,
+    uint32_t &line,
+    uint32_t &column,
+    JSONEnt &ent
+    );
+
+  static void ConsumeHex(
+    StrRef &str,
+    uint32_t &line,
+    uint32_t &column,
     uint8_t &value
     );
 
-  static bool ConsumeUCS2(
+  static void ConsumeUCS2(
     StrRef &str,
     uint32_t &line,
     uint32_t &column,
-    char const *&error,
     uint16_t &ucs2
     );
 
-  static void StringAppendASCII( char ch, JSONEntity &entity );
+  static void StringAppendASCII( char ch, JSONEnt &ent );
 
   static uint8_t UCS2ToUTF8( uint16_t ucs2, char utf8[3] );
 
   static void StringAppendUCS2(
     uint16_t ucs2,
-    JSONEntity &entity
+    JSONEnt &ent
     );
 
-  static bool ConsumeColon(
+  static void ConsumeColon(
     StrRef &str,
     uint32_t &line,
-    uint32_t &column,
-    char const *&error
+    uint32_t &column
     );
 
 private:
@@ -287,7 +293,7 @@ private:
     struct
     {
       uint32_t length;
-      char shortData[JSONDecoderShortStringMaxLength];
+      char shortData[JSONDecShortStringMaxLength];
     } string;
     struct
     {
@@ -300,7 +306,7 @@ private:
   } value;
 };
 
-inline void JSONEntity::stringGetData_Long( char *data ) const
+inline void JSONEnt::stringGetData_Long( char *data ) const
 {
   assert( isString() );
 
@@ -357,10 +363,8 @@ inline void JSONEntity::stringGetData_Long( char *data ) const
         {
           str = str.drop_front();
           uint32_t line = 0, column = 0;
-          char const *error = 0;
           uint16_t ucs2;
-          ConsumeUCS2( str, line, column, error, ucs2 );
-          assert( !error );
+          ConsumeUCS2( str, line, column, ucs2 );
           data += UCS2ToUTF8( ucs2, data );
         }
         break;
@@ -382,7 +386,7 @@ inline void JSONEntity::stringGetData_Long( char *data ) const
   assert( str.front() == quoteChar );
 }
 
-inline bool JSONEntity::stringIs_Long( StrRef thatStr ) const
+inline bool JSONEnt::stringIs_Long( StrRef thatStr ) const
 {
   assert( isString() );
 
@@ -452,10 +456,8 @@ inline bool JSONEntity::stringIs_Long( StrRef thatStr ) const
       {
         str = str.drop_front();
         uint32_t line = 0, column = 0;
-        char const *error = 0;
         uint16_t ucs2;
-        ConsumeUCS2( str, line, column, error, ucs2 );
-        assert( !error );
+        ConsumeUCS2( str, line, column, ucs2 );
 
         char utf8[3];
         uint32_t utf8Length = UCS2ToUTF8( ucs2, utf8 );
@@ -488,19 +490,16 @@ inline bool JSONEntity::stringIs_Long( StrRef thatStr ) const
   else return false;
 }
 
-inline bool JSONEntity::ConsumeHex(
+inline void JSONEnt::ConsumeHex(
   StrRef &str,
   uint32_t &line,
   uint32_t &column,
-  char const *&error,
   uint8_t &value
   )
 {
   if ( str.empty() )
-  {
-    error = "expected hex digit";
-    return false;
-  }
+    throw JSONMalformedException( line, column, FTL_STR("expected hex digit") );
+
   switch ( str.front() )
   {
     case '0': value = 0; break;
@@ -520,41 +519,37 @@ inline bool JSONEntity::ConsumeHex(
     case 'e': case 'E': value = 14; break;
     case 'f': case 'F': value = 15; break;
     default:
-      error = "invalid hex digit";
-      return false;
+      throw JSONMalformedException( line, column, FTL_STR("invalid hex digit") );
   }
   str = str.drop_front();
-  return true;
 }
 
-inline bool JSONEntity::ConsumeUCS2(
+inline void JSONEnt::ConsumeUCS2(
   StrRef &str,
   uint32_t &line,
   uint32_t &column,
-  char const *&error,
   uint16_t &ucs2
   )
 {
   uint8_t hex;
-  if ( !ConsumeHex( str, line, column, error, hex ) ) return false;
+  ConsumeHex( str, line, column, hex );
   ucs2 = uint16_t(hex) << 12;
-  if ( !ConsumeHex( str, line, column, error, hex ) ) return false;
+  ConsumeHex( str, line, column, hex );
   ucs2 |= uint16_t(hex) << 8;
-  if ( !ConsumeHex( str, line, column, error, hex ) ) return false;
+  ConsumeHex( str, line, column, hex );
   ucs2 |= uint16_t(hex) << 4;
-  if ( !ConsumeHex( str, line, column, error, hex ) ) return false;
+  ConsumeHex( str, line, column, hex );
   ucs2 |= uint16_t(hex);
-  return true;
 }
 
-inline void JSONEntity::StringAppendASCII( char ch, JSONEntity &entity )
+inline void JSONEnt::StringAppendASCII( char ch, JSONEnt &ent )
 {
-  if ( entity.value.string.length < JSONDecoderShortStringMaxLength )
-    entity.value.string.shortData[entity.value.string.length] = ch;
-  ++entity.value.string.length;
+  if ( ent.value.string.length < JSONDecShortStringMaxLength )
+    ent.value.string.shortData[ent.value.string.length] = ch;
+  ++ent.value.string.length;
 }
 
-inline uint8_t JSONEntity::UCS2ToUTF8( uint16_t ucs2, char utf8[3] )
+inline uint8_t JSONEnt::UCS2ToUTF8( uint16_t ucs2, char utf8[3] )
 {
   if ( ucs2 < 0x80 )
   {
@@ -576,55 +571,164 @@ inline uint8_t JSONEntity::UCS2ToUTF8( uint16_t ucs2, char utf8[3] )
   }
 }
 
-inline void JSONEntity::StringAppendUCS2(
+inline void JSONEnt::StringAppendUCS2(
   uint16_t ucs2,
-  JSONEntity &entity
+  JSONEnt &ent
   )
 {
   char utf8[3] = {0, 0, 0};
   uint32_t utf8Length = UCS2ToUTF8( ucs2, utf8 );
-  StringAppendASCII( utf8[0], entity );
+  StringAppendASCII( utf8[0], ent );
   if ( utf8Length > 1 )
   {
-    StringAppendASCII( utf8[1], entity );
+    StringAppendASCII( utf8[1], ent );
     if ( utf8Length > 2 )
-      StringAppendASCII( utf8[2], entity );
+      StringAppendASCII( utf8[2], ent );
   }
 }
 
-inline bool JSONEntity::ConsumeColon(
+inline void JSONEnt::ConsumeColon(
   StrRef &str,
   uint32_t &line,
-  uint32_t &column,
-  char const *&error
+  uint32_t &column
   )
 {
-  SkipWhitespace( str, line, column );
   if ( str.empty() || str[0] != ':' )
-  {
-    error = "expected ':'";
-    return false;
-  }
+    throw JSONMalformedException( line, column, FTL_STR("expected ':'") );
   str = str.drop_front();
   ++column;
-  return true;
 }
 
-inline bool JSONEntity::Consume(
+inline void JSONEnt::ConsumeString(
   StrRef &str,
   uint32_t &line,
   uint32_t &column,
-  char const *&error,
-  JSONEntity &entity
+  JSONEnt &ent
   )
 {
-  SkipWhitespace( str, line, column );
   if ( str.empty() )
-    return false;
+    throw JSONMalformedException( line, column, FTL_STR("expected string") );
 
-  entity.rawStr = str;
-  entity.line = line;
-  entity.column = column;
+  char quoteChar = str.front();
+  if ( quoteChar != '"' && quoteChar != '\'' )
+    throw JSONMalformedException( line, column, FTL_STR("expected string") );
+
+  ent.type = JSONEnt::Type_String;
+  ent.rawStr = str;
+  ent.line = line;
+  ent.column = column;
+  ent.value.string.length = 0;
+
+  str = str.drop_front();
+  ++column;
+
+  bool done = false;
+  while ( !done )
+  {
+    if ( str.empty() )
+      throw JSONMalformedException( line, column, FTL_STR("unterminated string") );
+
+    if ( str.front() == quoteChar )
+    {
+      str = str.drop_front();
+      ++column;
+      done = true;
+    }
+    else if ( str.front() == '\\' )
+    {
+      str = str.drop_front();
+      ++column;
+      if ( str.empty() )
+        throw JSONMalformedException( line, column, FTL_STR("unterminated string") );
+
+      switch ( str.front() )
+      {
+        case '"':
+        case '\'':
+        case '/':
+        case '\\':
+          StringAppendASCII( str.front(), ent );
+          str = str.drop_front();
+          ++column;
+          break;
+
+        case 'b':
+          StringAppendASCII( '\b', ent );
+          str = str.drop_front();
+          ++column;
+          break;
+        case 'f':
+          StringAppendASCII( '\f', ent );
+          str = str.drop_front();
+          ++column;
+          break;
+        case 'n':
+          StringAppendASCII( '\n', ent );
+          str = str.drop_front();
+          ++column;
+          break;
+        case 'r':
+          StringAppendASCII( '\r', ent );
+          str = str.drop_front();
+          ++column;
+          break;
+        case 't':
+          StringAppendASCII( '\t', ent );
+          str = str.drop_front();
+          ++column;
+          break;
+
+        case 'u':
+          str = str.drop_front();
+          ++column;
+          uint16_t ucs2;
+          ConsumeUCS2( str, line, column, ucs2 );
+          StringAppendUCS2( ucs2, ent );
+          break;
+
+        default:
+          throw JSONMalformedException( line, column, FTL_STR("invalid string escape character") );
+      }
+    }
+    else
+    {
+      StringAppendASCII( str.front(), ent );
+      switch ( str.front() )
+      {
+        case '\n':
+          ++line;
+          column = 1;
+          break;
+
+        case '\r':
+          break;
+
+        default:
+        {
+          uint8_t top = uint8_t(str.front()) & 0xC0;
+          // utf-8
+          if ( top != 0x80 )
+            ++column;
+        }
+        break;
+      }
+      str = str.drop_front();
+    }
+  }
+
+  ent.rawStr = ent.rawStr.drop_back( str.size() );
+}
+
+inline void JSONEnt::ConsumeEntity(
+  StrRef &str,
+  uint32_t &line,
+  uint32_t &column,
+  JSONEnt &ent
+  )
+{
+  if ( str.empty() )
+    throw JSONMalformedException( line, column, FTL_STR("expected ent") );
+
   switch ( str.front() )
   {
     case 'n':
@@ -634,13 +738,17 @@ inline bool JSONEntity::Consume(
         || str[2] != 'l'
         || str[3] != 'l'
         )
-      {
-        error = "expected 'null'";
-        return false;
-      }
+        throw JSONMalformedException( line, column, FTL_STR("expected 'null'") );
+
+      ent.type = JSONEnt::Type_Null;
+      ent.rawStr = str;
+      ent.line = line;
+      ent.column = column;
+
       str = str.drop_front( 4 );
       column += 4;
-      entity.type = JSONEntity::Type_Null;
+
+      ent.rawStr = ent.rawStr.drop_back( str.size() );
     }
     break;
 
@@ -651,14 +759,18 @@ inline bool JSONEntity::Consume(
         || str[2] != 'u'
         || str[3] != 'e'
         )
-      {
-        error = "expected 'true'";
-        return false;
-      }
+        throw JSONMalformedException( line, column, FTL_STR("expected 'true'") );
+
+      ent.type = JSONEnt::Type_Boolean;
+      ent.rawStr = str;
+      ent.line = line;
+      ent.column = column;
+
+      ent.value.boolean = true;
       str = str.drop_front( 4 );
       column += 4;
-      entity.type = JSONEntity::Type_Boolean;
-      entity.value.boolean = true;
+      
+      ent.rawStr = ent.rawStr.drop_back( str.size() );
     }
     break;
 
@@ -670,14 +782,18 @@ inline bool JSONEntity::Consume(
         || str[3] != 's'
         || str[4] != 'e'
         )
-      {
-        error = "expected 'false'";
-        return false;
-      }
+        throw JSONMalformedException( line, column, FTL_STR("expected 'false'") );
+
+      ent.type = JSONEnt::Type_Boolean;
+      ent.rawStr = str;
+      ent.line = line;
+      ent.column = column;
+      ent.value.boolean = false;
+
       str = str.drop_front( 5 );
       column += 5;
-      entity.type = JSONEntity::Type_Boolean;
-      entity.value.boolean = false;
+      
+      ent.rawStr = ent.rawStr.drop_back( str.size() );
     }
     break;
 
@@ -693,15 +809,16 @@ inline bool JSONEntity::Consume(
     case '8':
     case '9':
     {
+      ent.rawStr = str;
+      ent.line = line;
+      ent.column = column;
+
       if ( !str.empty() && str.front() == '-' )
       {
         str = str.drop_front();
         ++column;
         if ( str.empty() )
-        {
-          error = "expected decimal digit";
-          return false;
-        }
+          throw JSONMalformedException( line, column, FTL_STR("expected decimal digit") );
       }
 
       switch ( str.front() )
@@ -728,30 +845,27 @@ inline bool JSONEntity::Consume(
           }
           break;
         default:
-          error = "expected decimal digit";
-          return false;
+          throw JSONMalformedException( line, column, FTL_STR("expected decimal digit") );
       }
 
       if ( str.empty()
         || (str.front() != '.' && str.front() != 'e' && str.front() != 'E') )
       {
-        entity.type = JSONEntity::Type_Int32;
+        ent.type = JSONEnt::Type_Int32;
 
         static const uint32_t maxIntegerLength = 15;
-        uint32_t length = str.data() - entity.rawStr.data();
+        uint32_t length = str.data() - ent.rawStr.data();
         if ( length > maxIntegerLength )
-        {
-          error = "integer too long";
-          return false;
-        }
+          throw JSONMalformedException( line, column, FTL_STR("integer too long") );
+
         char buf[maxIntegerLength+1];
-        memcpy( buf, entity.rawStr.data(), length );
+        memcpy( buf, ent.rawStr.data(), length );
         buf[length] = '\0';
-        entity.value.int32 = atoi( buf );
+        ent.value.int32 = atoi( buf );
       }
       else
       {
-        entity.type = JSONEntity::Type_Float64;
+        ent.type = JSONEnt::Type_Float64;
 
         if ( str.front() == '.' )
         {
@@ -759,10 +873,8 @@ inline bool JSONEntity::Consume(
           ++column;
 
           if ( str.empty() || str.front() < '0' || str.front() > '9' )
-          {
-            error = "expected decimal digit";
-            return false;
-          }
+            throw JSONMalformedException( line, column, FTL_STR("expected decimal digit") );
+
           while ( !str.empty() && str.front() >= '0' && str.front() <= '9' )
           {
             str = str.drop_front();
@@ -782,10 +894,8 @@ inline bool JSONEntity::Consume(
           }
 
           if ( str.empty() || str.front() < '0' || str.front() > '9' )
-          {
-            error = "expected decimal digit";
-            return false;
-          }
+            throw JSONMalformedException( line, column, FTL_STR("expected decimal digit") );
+
           str = str.drop_front();
           ++column;
           while ( !str.empty() && str.front() >= '0' && str.front() <= '9' )
@@ -796,139 +906,37 @@ inline bool JSONEntity::Consume(
         }
 
         static const uint32_t maxScalarLength = 31;
-        uint32_t length = str.data() - entity.rawStr.data();
+        uint32_t length = str.data() - ent.rawStr.data();
         if ( length > maxScalarLength )
-        {
-          error = "floating point too long";
-          return false;
-        }
+          throw JSONMalformedException( line, column, FTL_STR("floating point too long") );
+
         char buf[maxScalarLength+1];
-        memcpy( buf, entity.rawStr.data(), length );
+        memcpy( buf, ent.rawStr.data(), length );
         buf[length] = '\0';
 
         char const *oldlocale = setlocale( LC_NUMERIC, "C" );
-        entity.value.float64 = atof( buf );
+        ent.value.float64 = atof( buf );
         if ( oldlocale )
           setlocale( LC_NUMERIC, oldlocale );
       }
+      
+      ent.rawStr = ent.rawStr.drop_back( str.size() );
     }
     break;
 
     case '"':
     case '\'':
-    {
-      entity.type = JSONEntity::Type_String;
-      entity.value.string.length = 0;
-      char quoteChar = str.front();
-      str = str.drop_front();
-      ++column;
-
-      bool done = false;
-      while ( !done )
-      {
-        if ( str.empty() )
-        {
-          error = "unterminated string";
-          return false;
-        }
-        if ( str.front() == quoteChar )
-        {
-          str = str.drop_front();
-          ++column;
-          done = true;
-        }
-        else if ( str.front() == '\\' )
-        {
-          str = str.drop_front();
-          ++column;
-          if ( str.empty() )
-          {
-            error = "unterminated string";
-            return false;
-          }
-          switch ( str.front() )
-          {
-            case '"':
-            case '\'':
-            case '/':
-            case '\\':
-              StringAppendASCII( str.front(), entity );
-              str = str.drop_front();
-              ++column;
-              break;
-
-            case 'b':
-              StringAppendASCII( '\b', entity );
-              str = str.drop_front();
-              ++column;
-              break;
-            case 'f':
-              StringAppendASCII( '\f', entity );
-              str = str.drop_front();
-              ++column;
-              break;
-            case 'n':
-              StringAppendASCII( '\n', entity );
-              str = str.drop_front();
-              ++column;
-              break;
-            case 'r':
-              StringAppendASCII( '\r', entity );
-              str = str.drop_front();
-              ++column;
-              break;
-            case 't':
-              StringAppendASCII( '\t', entity );
-              str = str.drop_front();
-              ++column;
-              break;
-
-            case 'u':
-              str = str.drop_front();
-              ++column;
-              uint16_t ucs2;
-              if ( !ConsumeUCS2( str, line, column, error, ucs2 ) )
-                return false;
-              StringAppendUCS2( ucs2, entity );
-              break;
-
-            default:
-              error = "invalid string escape character";
-              return false;
-          }
-        }
-        else
-        {
-          StringAppendASCII( str.front(), entity );
-          switch ( str.front() )
-          {
-            case '\n':
-              ++line;
-              column = 1;
-              break;
-
-            case '\r':
-              break;
-
-            default:
-            {
-              uint8_t top = uint8_t(str.front()) & 0xC0;
-              // utf-8
-              if ( top != 0x80 )
-                ++column;
-            }
-            break;
-          }
-          str = str.drop_front();
-        }
-      }
-    }
-    break;
+      ConsumeString( str, line, column, ent );
+      break;
 
     case '{':
     {
-      entity.type = JSONEntity::Type_Object;
-      entity.value.object.size = 0;
+      ent.type = JSONEnt::Type_Object;
+      ent.rawStr = str;
+      ent.line = line;
+      ent.column = column;
+      ent.value.object.size = 0;
+
       str = str.drop_front();
       ++column;
 
@@ -937,10 +945,8 @@ inline bool JSONEntity::Consume(
       {
         SkipWhitespace( str, line, column );
         if ( str.empty() )
-        {
-          error = "expected entity or '}'";
-          return false;
-        }
+          throw JSONMalformedException( line, column, FTL_STR("expected string or '}'") );
+
         switch ( str.front() )
         {
           case '}':
@@ -951,39 +957,35 @@ inline bool JSONEntity::Consume(
 
           default:
           {
-            JSONEntity keyEntity;
-            uint32_t keyLine = line;
-            uint32_t keyColumn = column;
-            if ( !Consume( str, line, column, error, keyEntity ) )
-              return false;
-            if ( !keyEntity.isString() )
-            {
-              line = keyLine;
-              column = keyColumn;
-              error = "expected string";
-              return false;
-            }
+            JSONEnt keyEntity;
+            ConsumeString( str, line, column, keyEntity );
 
-            if ( !ConsumeColon( str, line, column, error ) )
-              return false;
+            SkipWhitespace( str, line, column );
+            ConsumeColon( str, line, column );
+            SkipWhitespace( str, line, column );
 
-            JSONEntity valueEntity;
-            if ( !Consume( str, line, column, error, valueEntity ) )
-              return false;
+            JSONEnt valueEntity;
+            ConsumeEntity( str, line, column, valueEntity );
 
-            ++entity.value.object.size;
+            ++ent.value.object.size;
 
             break;
           }
         }
       }
+      
+      ent.rawStr = ent.rawStr.drop_back( str.size() );
     }
     break;
 
     case '[':
     {
-      entity.type = JSONEntity::Type_Array;
-      entity.value.array.size = 0;
+      ent.type = JSONEnt::Type_Array;
+      ent.rawStr = str;
+      ent.line = line;
+      ent.column = column;
+      ent.value.array.size = 0;
+
       str = str.drop_front();
       ++column;
 
@@ -992,10 +994,8 @@ inline bool JSONEntity::Consume(
       {
         SkipWhitespace( str, line, column );
         if ( str.empty() )
-        {
-          error = "expected entity or ']'";
-          return false;
-        }
+          throw JSONMalformedException( line, column, FTL_STR("expected ent or ']'") );
+
         switch ( str.front() )
         {
           case ']':
@@ -1006,29 +1006,26 @@ inline bool JSONEntity::Consume(
 
           default:
           {
-            JSONEntity elementEntity;
-            if ( !Consume( str, line, column, error, elementEntity ) )
-              return false;
+            JSONEnt elementEntity;
+            ConsumeEntity( str, line, column, elementEntity );
 
-            ++entity.value.array.size;
+            ++ent.value.array.size;
 
             break;
           }
         }
       }
+      
+      ent.rawStr = ent.rawStr.drop_back( str.size() );
     }
     break;
 
     default:
-      error = "unexpected character";
-      return false;
+      throw JSONMalformedException( line, column, FTL_STR("unrecognized character") );
   }
-
-  entity.rawStr = entity.rawStr.drop_back( str.size() );
-  return true;
 }
 
-inline void JSONEntity::SkipWhitespace(
+inline void JSONEnt::SkipWhitespace(
   StrRef &str,
   uint32_t &line,
   uint32_t &column
@@ -1109,106 +1106,75 @@ inline void JSONEntity::SkipWhitespace(
   }
 }
 
-class JSONDecoderBase
+class JSONDecBase
 {
 public:
 
-  JSONDecoderBase( StrRef str )
+  JSONDecBase( StrRef &str, uint32_t &line, uint32_t &column )
     : m_str( str )
-    , m_line( 1 )
-    , m_column( 1 )
-    , m_error( 0 )
+    , m_line( line )
+    , m_column( column )
   {
   }
-
-  JSONDecoderBase( JSONEntity const &entity )
-    : m_str( entity.getRawStr() )
-    , m_line( entity.getLine() )
-    , m_column( entity.getColumn() )
-    , m_error( 0 )
-  {
-  }
-
-  bool hadError() const
-    { return !!m_error; }
-
-  uint32_t getErrorLine() const
-    { return m_line; }
-
-  uint32_t getErrorColumn() const
-    { return m_column; }
-
-  char const *getErrorDesc() const
-    { return m_error; }
 
 protected:
 
-  StrRef m_str;
-  uint32_t m_line;
-  uint32_t m_column;
-  char const *m_error;
+  StrRef &m_str;
+  uint32_t &m_line;
+  uint32_t &m_column;
 };
 
-class JSONDecoder : public JSONDecoderBase
+class JSONDec : public JSONDecBase
 {
 public:
 
-  JSONDecoder( StrRef str )
-    : JSONDecoderBase( str ) {}
+  JSONDec( StrRef &str, uint32_t &line, uint32_t &column )
+    : JSONDecBase( str, line, column ) {}
 
-  bool getNext(
-    JSONEntity &entity
-    )
+  bool getNext( JSONEnt &ent )
   {
-    return JSONEntity::Consume( m_str, m_line, m_column, m_error, entity );
+    JSONEnt::SkipWhitespace( m_str, m_line, m_column );
+    if ( m_str.empty() )
+      return false;
+
+    JSONEnt::ConsumeEntity( m_str, m_line, m_column, ent );
+
+    return true;
   }
 };
 
-class JSONObjectDecoder : public JSONDecoderBase
+class JSONObjectDec : public JSONDecBase
 {
 public:
 
-  JSONObjectDecoder( JSONEntity const &entity )
-    : JSONDecoderBase( entity )
+  JSONObjectDec( StrRef &str, uint32_t &line, uint32_t &column )
+    : JSONDecBase( str, line, column )
     , m_lastKeyShortData( 0 )
     , m_lastKeyLength( 0 )
   {
-    assert( entity.isObject() );
-    assert( !m_str.empty() );
-    assert( m_str[0] == '{' );
+    JSONEnt::SkipWhitespace( m_str, m_line, m_column );
+    if ( m_str.empty() || m_str.front() != '{' )
+      throw JSONMalformedException( m_line, m_column, FTL_STR("expected '{'") );
     m_str = m_str.drop_front();
     ++m_column;
   }
 
-  bool getNext(
-    JSONEntity &key,
-    JSONEntity &value
-    )
+  bool getNext( JSONEnt &key, JSONEnt &value )
   {
-    JSONEntity::SkipWhitespace( m_str, m_line, m_column );
-
-    if ( m_str.empty() || m_str[0] == '}' )
+    JSONEnt::SkipWhitespace( m_str, m_line, m_column );
+    if ( m_str.empty() || m_str.front() == '}' )
       return false;
 
-    uint32_t keyLine = m_line;
-    uint32_t keyColumn = m_column;
-    if ( !JSONEntity::Consume( m_str, m_line, m_column, m_error, key ) )
-      return false;
-    if ( !key.isString() )
-    {
-      m_line = keyLine;
-      m_column = keyColumn;
-      m_error = "expected string";
-      return false;
-    }
+    JSONEnt::ConsumeString( m_str, m_line, m_column, key );
+
     m_lastKeyShortData = key.value.string.shortData;
     m_lastKeyLength = key.value.string.length;
 
-    if ( !JSONEntity::ConsumeColon( m_str, m_line, m_column, m_error ) )
-      return false;
+    JSONEnt::SkipWhitespace( m_str, m_line, m_column );
+    JSONEnt::ConsumeColon( m_str, m_line, m_column );
+    JSONEnt::SkipWhitespace( m_str, m_line, m_column );
 
-    if ( !JSONEntity::Consume( m_str, m_line, m_column, m_error, value ) )
-      return false;
+    JSONEnt::ConsumeEntity( m_str, m_line, m_column, value );
 
     return true;
   }
@@ -1219,38 +1185,37 @@ private:
   uint32_t m_lastKeyLength;
 };
 
-class JSONArrayDecoder : public JSONDecoderBase
+class JSONArrayDec : public JSONDecBase
 {
 public:
 
-  JSONArrayDecoder( JSONEntity const &entity )
-    : JSONDecoderBase( entity )
+  JSONArrayDec( StrRef &str, uint32_t &line, uint32_t &column )
+    : JSONDecBase( str, line, column )
     , m_count( 0 )
     , m_lastIndex( 0 )
   {
-    assert( entity.isArray() );
-    assert( !m_str.empty() );
-    assert( m_str[0] == '[' );
+    JSONEnt::SkipWhitespace( m_str, m_line, m_column );
+    if ( m_str.empty() || m_str.front() != '[' )
+      throw JSONMalformedException( m_line, m_column, FTL_STR("expected '['") );
     m_str = m_str.drop_front();
     ++m_column;
   }
 
-  bool getNext(
-    JSONEntity &element
-    )
+  bool getNext( JSONEnt &element )
   {
-    JSONEntity::SkipWhitespace( m_str, m_line, m_column );
-    
-    if ( m_str.empty() || m_str[0] == ']' )
+    JSONEnt::SkipWhitespace( m_str, m_line, m_column );
+    if ( m_str.empty() || m_str.front() == ']' )
       return false;
 
-    if ( !JSONEntity::Consume( m_str, m_line, m_column, m_error, element ) )
-      return false;
+    JSONEnt::ConsumeEntity( m_str, m_line, m_column, element );
 
     m_lastIndex = ++m_count;
 
     return true;
   }
+
+  uint32_t getLastIndex() const
+    { return m_lastIndex; }
 
 private:
 
@@ -1260,4 +1225,4 @@ private:
 
 FTL_NAMESPACE_END
 
-#endif //_FTL_JSONDecoder_h
+#endif //_FTL_JSONDec_h

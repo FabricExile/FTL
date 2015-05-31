@@ -1,0 +1,8 @@
+""
+"fred"
+"a much longer string that won't fit into the short data"
+"\"/\\\b\f\n\t\r"
+"piqué"
+"piqué"
+"traling"
+"single-quoted string"

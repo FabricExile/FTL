@@ -2,10 +2,11 @@
  *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
  */
 
-#include <FTL/JSONDecoder.h>
+#include <FTL/JSONDec.h>
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 template<typename StringTy>
 void AppendQuotedString(
@@ -64,71 +65,77 @@ void AppendQuotedString(
     string += quote;
 }
 
-void displayEntity(
-  FTL::JSONEntity const &entity,
+void displayEnt(
+  FTL::JSONEnt const &ent,
   std::string const &indent
   )
 {
   std::cout << indent;
-  std::cout << entity.getLine() << ':' << entity.getColumn() << ' ';
-  switch ( entity.getType() )
+  std::cout << ent.getLine() << ':' << ent.getColumn() << ' ';
+  switch ( ent.getType() )
   {
-    case FTL::JSONEntity::Type_Null:
+    case FTL::JSONEnt::Type_Null:
       std::cout << FTL_STR("NULL\n");
       break;
-    case FTL::JSONEntity::Type_Boolean:
+    case FTL::JSONEnt::Type_Boolean:
       std::cout << FTL_STR("BOOLEAN ");
-      std::cout << (entity.booleanValue()? "true": "false");
+      std::cout << (ent.booleanValue()? "true": "false");
       std::cout << '\n';
       break;
-    case FTL::JSONEntity::Type_Int32:
+    case FTL::JSONEnt::Type_Int32:
     {
       std::cout << FTL_STR("INTEGER ");
-      std::cout << entity.int32Value();
+      std::cout << ent.int32Value();
       std::cout << '\n';
     }
     break;
-    case FTL::JSONEntity::Type_Float64:
+    case FTL::JSONEnt::Type_Float64:
     {
       std::cout << FTL_STR("SCALAR ");
-      std::cout << entity.float64Value();
+      std::cout << ent.float64Value();
       std::cout << '\n';
       break;
     }
-    case FTL::JSONEntity::Type_String:
+    case FTL::JSONEnt::Type_String:
     {
       std::string string;
-      entity.stringAppendTo( string );
+      ent.stringAppendTo( string );
 
       std::string quotedString;
       AppendQuotedString( string, quotedString );
 
       std::cout << FTL_STR("STRING ");
-      std::cout << entity.stringLength();
+      std::cout << ent.stringLength();
       std::cout << " ";
       std::cout << quotedString;
       std::cout << '\n';
       break;
     }
-    case FTL::JSONEntity::Type_Object:
+    case FTL::JSONEnt::Type_Object:
     {
-      std::cout << FTL_STR("OBJECT ") << entity.objectSize() << '\n';
-      FTL::JSONObjectDecoder jod( entity );
-      FTL::JSONEntity key, value;
-      while ( jod.getNext( key, value ) )
+      std::cout << FTL_STR("OBJECT ") << ent.objectSize() << '\n';
+      FTL::StrRef str = ent.getRawStr();
+      uint32_t line = ent.getLine();
+      uint32_t column = ent.getColumn();
+      FTL::JSONObjectDec objectDec( str, line, column );
+      FTL::JSONEnt key, value;
+      while ( objectDec.getNext( key, value ) )
       {
-        displayEntity( key, "  " + indent );
-        displayEntity( value, "    " + indent );
+        displayEnt( key, "  " + indent );
+        displayEnt( value, "    " + indent );
       }
     }
     break;
-    case FTL::JSONEntity::Type_Array:
+    case FTL::JSONEnt::Type_Array:
     {
-      std::cout << FTL_STR("ARRAY ") << entity.arraySize() << '\n';
-      FTL::JSONArrayDecoder jad( entity );
-      FTL::JSONEntity element;
-      while ( jad.getNext( element ) )
-        displayEntity( element, "  " + indent );
+      std::cout << FTL_STR("ARRAY ") << ent.arraySize() << '\n';
+      FTL::StrRef str = ent.getRawStr();
+      uint32_t line = ent.getLine();
+      uint32_t column = ent.getColumn();
+      FTL::JSONArrayDec arrayDec( str, line, column );
+      FTL::JSONEnt element;
+      while ( arrayDec.getNext( element ) )
+        displayEnt( element, "  " + indent );
     }
     break;
 
@@ -140,31 +147,42 @@ void displayEntity(
 
 void parseJSON( FILE *fp )
 {
-  static const uint32_t maxLength = 16*1024*1024;
-  char *data = new char[maxLength];
-  uint32_t length = 0;
+  static const size_t MaxRead = 16*1024;
+  std::vector<char> jsonInput;
   while ( !feof( fp ) )
   {
-    int read = fread( &data[length], 1, maxLength - length, fp );
-    if ( read <= 0 )
-      break;
-    length += read;
-  }
-  data[length] = '\0';
-
-  FTL::JSONDecoder decoder( data );
-  FTL::JSONEntity entity;
-  while ( decoder.getNext( entity ) )
-    displayEntity( entity, "" );
-  if ( decoder.hadError() )
-    printf(
-      "Caught exception: malformed JSON (line %u, column %u): %s\n",
-      decoder.getErrorLine(),
-      decoder.getErrorColumn(),
-      decoder.getErrorDesc()
+    size_t oldSize = jsonInput.size();
+    jsonInput.resize( oldSize + MaxRead );
+    int read = fread(
+      &jsonInput[oldSize],
+      1,
+      MaxRead,
+      fp
       );
+    if ( read <= 0 )
+    {
+      jsonInput.resize( oldSize );
+      break;
+    }
+    jsonInput.resize( oldSize + read );
+  }
 
-  delete [] data;
+  FTL::StrRef jsonStr( &jsonInput[0], jsonInput.size() );
+  uint32_t jsonLine = 1, jsonColumn = 1;
+  FTL::JSONDec decoder( jsonStr, jsonLine, jsonColumn );
+  try
+  {
+    FTL::JSONEnt ent;
+    while ( decoder.getNext( ent ) )
+      displayEnt( ent, "" );
+  }
+  catch ( FTL::JSONException e )
+  {
+    std::cout
+      << "Caught exception: "
+      << e.getDesc()
+      << "\n";
+  }
 }
 
 int main( int argc, char **argv )
