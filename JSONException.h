@@ -7,6 +7,7 @@
 
 #include <FTL/StrRef.h>
 
+#include <stdint.h>
 #include <string>
 
 FTL_NAMESPACE_BEGIN
