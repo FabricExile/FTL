@@ -29,7 +29,7 @@ void catJSON( FILE *fp )
     jsonInput.resize( oldSize + read );
   }
 
-  FTL::JSONDecState ds(
+  FTL::JSONStrWithLoc ds(
     FTL::StrRef( jsonInput.empty()? 0: &jsonInput[0], jsonInput.size() )
     );
   for (;;)

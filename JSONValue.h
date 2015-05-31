@@ -29,10 +29,10 @@ public:
 
   static JSONValue *Create( JSONEnt const &je );
 
-  static JSONValue *Decode( JSONDecState &ds );
+  static JSONValue *Decode( JSONStrWithLoc &ds );
   static JSONValue *Decode( FTL::StrRef str )
   {
-    JSONDecState ds( str );
+    JSONStrWithLoc ds( str );
     return Decode( ds );
   }
 
@@ -339,7 +339,7 @@ public:
   static StrRef NotAStr()
     { return FTL_STR("not an object"); }
 
-  static JSONObject *Decode( JSONDecState &ds )
+  static JSONObject *Decode( JSONStrWithLoc &ds )
   {
     JSONValue *jsonValue = JSONValue::Decode( ds );
     return jsonValue->cast<JSONObject>();
@@ -462,7 +462,7 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
     {
       OwnedPtr<JSONObject> object( new JSONObject() );
 
-      JSONDecState ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONStrWithLoc ds( je.getRawStr(), je.getLine(), je.getColumn() );
       JSONObjectDec objectDec( ds );
       JSONEnt keyJE, valueJE;
       while ( objectDec.getNext( keyJE, valueJE ) )
@@ -491,7 +491,7 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
       OwnedPtr<JSONArray> array( new JSONArray() );
       array->reserve( je.arraySize() );
 
-      JSONDecState ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONStrWithLoc ds( je.getRawStr(), je.getLine(), je.getColumn() );
       JSONArrayDec arrayDec( ds );
       JSONEnt elementJE;
       while ( arrayDec.getNext( elementJE ) )
@@ -506,7 +506,7 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
   }
 }
 
-inline JSONValue *JSONValue::Decode( JSONDecState &ds )
+inline JSONValue *JSONValue::Decode( JSONStrWithLoc &ds )
 {
   JSONDec jd( ds );
   JSONEnt je;
