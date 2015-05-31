@@ -167,7 +167,7 @@ void parseJSON( FILE *fp )
     jsonInput.resize( oldSize + read );
   }
 
-  FTL::StrRef jsonStr( &jsonInput[0], jsonInput.size() );
+  FTL::StrRef jsonStr( jsonInput.empty()? 0: &jsonInput[0], jsonInput.size() );
   uint32_t jsonLine = 1, jsonColumn = 1;
   FTL::JSONDec decoder( jsonStr, jsonLine, jsonColumn );
   try
