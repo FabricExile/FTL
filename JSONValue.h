@@ -29,7 +29,12 @@ public:
 
   static JSONValue *Create( JSONEnt const &je );
 
-  static JSONValue *Decode( StrRef &jsonStr, uint32_t &jsonLine, uint32_t &jsonColumn );
+  static JSONValue *Decode( JSONDecState &ds );
+  static JSONValue *Decode( FTL::StrRef str )
+  {
+    JSONDecState ds( str );
+    return Decode( ds );
+  }
 
   Type getType() const
     { return m_type; }
@@ -334,11 +339,9 @@ public:
   static StrRef NotAStr()
     { return FTL_STR("not an object"); }
 
-  static JSONObject *Decode(
-    StrRef &jsonStr, uint32_t &jsonLine, uint32_t &jsonColumn
-    )
+  static JSONObject *Decode( JSONDecState &ds )
   {
-    JSONValue *jsonValue = JSONValue::Decode( jsonStr, jsonLine, jsonColumn );
+    JSONValue *jsonValue = JSONValue::Decode( ds );
     return jsonValue->cast<JSONObject>();
   }
 
@@ -459,12 +462,10 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
     {
       OwnedPtr<JSONObject> object( new JSONObject() );
 
-      StrRef str = je.getRawStr();
-      uint32_t line = je.getLine();
-      uint32_t column = je.getColumn();
-      JSONObjectDec jod( str, line, column );
+      JSONDecState ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONObjectDec objectDec( ds );
       JSONEnt keyJE, valueJE;
-      while ( jod.getNext( keyJE, valueJE ) )
+      while ( objectDec.getNext( keyJE, valueJE ) )
       {
         if ( !keyJE.isString() )
           throw JSONInternalErrorException();
@@ -490,12 +491,10 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
       OwnedPtr<JSONArray> array( new JSONArray() );
       array->reserve( je.arraySize() );
 
-      StrRef str = je.getRawStr();
-      uint32_t line = je.getLine();
-      uint32_t column = je.getColumn();
-      JSONArrayDec jad( str, line, column );
+      JSONDecState ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONArrayDec arrayDec( ds );
       JSONEnt elementJE;
-      while ( jad.getNext( elementJE ) )
+      while ( arrayDec.getNext( elementJE ) )
         array->push_back( Create( elementJE ) );
 
       return array.take();
@@ -507,11 +506,9 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
   }
 }
 
-inline JSONValue *JSONValue::Decode(
-  StrRef &jsonStr, uint32_t &jsonLine, uint32_t &jsonColumn
-  )
+inline JSONValue *JSONValue::Decode( JSONDecState &ds )
 {
-  JSONDec jd( jsonStr, jsonLine, jsonColumn );
+  JSONDec jd( ds );
   JSONEnt je;
   OwnedPtr<JSONValue> result;
   if ( jd.getNext( je ) )

@@ -29,15 +29,14 @@ void catJSON( FILE *fp )
     jsonInput.resize( oldSize + read );
   }
 
-  FTL::StrRef jsonStr( &jsonInput[0], jsonInput.size() );
-  uint32_t jsonLine = 1, jsonColumn = 1;
+  FTL::JSONDecState ds(
+    FTL::StrRef( jsonInput.empty()? 0: &jsonInput[0], jsonInput.size() )
+    );
   for (;;)
   {
     try
     {
-      FTL::OwnedPtr<FTL::JSONValue> jsonValue(
-        FTL::JSONValue::Decode( jsonStr, jsonLine, jsonColumn )
-        );
+      FTL::OwnedPtr<FTL::JSONValue> jsonValue( FTL::JSONValue::Decode( ds ) );
       if ( !jsonValue )
         break;
       std::string string;

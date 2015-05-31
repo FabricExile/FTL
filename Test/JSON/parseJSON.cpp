@@ -114,10 +114,8 @@ void displayEnt(
     case FTL::JSONEnt::Type_Object:
     {
       std::cout << FTL_STR("OBJECT ") << ent.objectSize() << '\n';
-      FTL::StrRef str = ent.getRawStr();
-      uint32_t line = ent.getLine();
-      uint32_t column = ent.getColumn();
-      FTL::JSONObjectDec objectDec( str, line, column );
+      FTL::JSONDecState ds( ent.getRawStr(), ent.getLine(), ent.getColumn() );
+      FTL::JSONObjectDec objectDec( ds );
       FTL::JSONEnt key, value;
       while ( objectDec.getNext( key, value ) )
       {
@@ -129,10 +127,8 @@ void displayEnt(
     case FTL::JSONEnt::Type_Array:
     {
       std::cout << FTL_STR("ARRAY ") << ent.arraySize() << '\n';
-      FTL::StrRef str = ent.getRawStr();
-      uint32_t line = ent.getLine();
-      uint32_t column = ent.getColumn();
-      FTL::JSONArrayDec arrayDec( str, line, column );
+      FTL::JSONDecState ds( ent.getRawStr(), ent.getLine(), ent.getColumn() );
+      FTL::JSONArrayDec arrayDec( ds );
       FTL::JSONEnt element;
       while ( arrayDec.getNext( element ) )
         displayEnt( element, "  " + indent );
@@ -167,9 +163,10 @@ void parseJSON( FILE *fp )
     jsonInput.resize( oldSize + read );
   }
 
-  FTL::StrRef jsonStr( &jsonInput[0], jsonInput.size() );
-  uint32_t jsonLine = 1, jsonColumn = 1;
-  FTL::JSONDec decoder( jsonStr, jsonLine, jsonColumn );
+  FTL::JSONDecState ds(
+    FTL::StrRef( jsonInput.empty()? 0: &jsonInput[0], jsonInput.size() )
+    );
+  FTL::JSONDec decoder( ds );
   try
   {
     FTL::JSONEnt ent;
