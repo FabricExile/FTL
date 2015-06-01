@@ -167,9 +167,9 @@ void parseJSON( FILE *fp )
     FTL::StrRef( jsonInput.empty()? 0: &jsonInput[0], jsonInput.size() )
     );
   FTL::JSONDec decoder( strWithLoc );
-  FTL::JSONEnt ent;
   try
   {
+    FTL::JSONEnt ent;
     while ( decoder.getNext( ent ) )
       displayEnt( ent, "" );
   }
