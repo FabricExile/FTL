@@ -293,12 +293,12 @@ protected:
 
   static void ConsumeEntity(
     JSONStrWithLoc &ds,
-    JSONEnt &ent
+    JSONEnt *ent
     );
 
   static void ConsumeString(
     JSONStrWithLoc &ds,
-    JSONEnt &ent
+    JSONEnt *ent
     );
 
   static uint8_t ConsumeHex( JSONStrWithLoc &ds );
@@ -619,7 +619,7 @@ inline void JSONEnt::ConsumeColon(
 
 inline void JSONEnt::ConsumeString(
   JSONStrWithLoc &ds,
-  JSONEnt &ent
+  JSONEnt *ent
   )
 {
   if ( ds.empty() )
@@ -629,9 +629,12 @@ inline void JSONEnt::ConsumeString(
   if ( quoteChar != '"' && quoteChar != '\'' )
     throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected string") );
 
-  ent.type = JSONEnt::Type_String;
-  ent.rawStrWithLoc = ds;
-  ent.value.string.length = 0;
+  if ( ent )
+  {
+    ent->type = JSONEnt::Type_String;
+    ent->rawStrWithLoc = ds;
+    ent->value.string.length = 0;
+  }
 
   ds.drop();
 
@@ -658,34 +661,41 @@ inline void JSONEnt::ConsumeString(
         case '\'':
         case '/':
         case '\\':
-          StringAppendASCII( ds.front(), ent );
+          if ( ent )
+            StringAppendASCII( ds.front(), *ent );
           ds.drop();
           break;
 
         case 'b':
-          StringAppendASCII( '\b', ent );
+          if ( ent )
+            StringAppendASCII( '\b', *ent );
           ds.drop();
           break;
         case 'f':
-          StringAppendASCII( '\f', ent );
+          if ( ent )
+            StringAppendASCII( '\f', *ent );
           ds.drop();
           break;
         case 'n':
-          StringAppendASCII( '\n', ent );
+          if ( ent )
+            StringAppendASCII( '\n', *ent );
           ds.drop();
           break;
         case 'r':
-          StringAppendASCII( '\r', ent );
+          if ( ent )
+            StringAppendASCII( '\r', *ent );
           ds.drop();
           break;
         case 't':
-          StringAppendASCII( '\t', ent );
+          if ( ent )
+            StringAppendASCII( '\t', *ent );
           ds.drop();
           break;
 
         case 'u':
           ds.drop();
-          StringAppendUCS2( ConsumeUCS2( ds ), ent );
+          if ( ent )
+            StringAppendUCS2( ConsumeUCS2( ds ), *ent );
           break;
 
         default:
@@ -694,21 +704,23 @@ inline void JSONEnt::ConsumeString(
     }
     else
     {
-      StringAppendASCII( ds.front(), ent );
+      if ( ent )
+        StringAppendASCII( ds.front(), *ent );
       ds.drop();
     }
   }
 
-  ent.rawStrWithLoc.drop_back( ds.size() );
+  if ( ent )
+    ent->rawStrWithLoc.drop_back( ds.size() );
 }
 
 inline void JSONEnt::ConsumeEntity(
   JSONStrWithLoc &ds,
-  JSONEnt &ent
+  JSONEnt *ent
   )
 {
   if ( ds.empty() )
-    throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected ent") );
+    throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected entity") );
 
   switch ( ds.front() )
   {
@@ -721,12 +733,14 @@ inline void JSONEnt::ConsumeEntity(
         )
         throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected 'null'") );
 
-      ent.type = JSONEnt::Type_Null;
-      ent.rawStrWithLoc = ds;
+      if ( ent )
+      {
+        ent->type = JSONEnt::Type_Null;
+        ent->rawStrWithLoc = ds;
+        ent->rawStrWithLoc.drop_back( ds.size() - 4 );
+      }
 
       ds.drop( 4 );
-
-      ent.rawStrWithLoc.drop_back( ds.size() );
     }
     break;
 
@@ -739,13 +753,15 @@ inline void JSONEnt::ConsumeEntity(
         )
         throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected 'true'") );
 
-      ent.type = JSONEnt::Type_Boolean;
-      ent.rawStrWithLoc = ds;
+      if ( ent )
+      {
+        ent->type = JSONEnt::Type_Boolean;
+        ent->rawStrWithLoc = ds;
+        ent->rawStrWithLoc.drop_back( ds.size() - 4 );
+        ent->value.boolean = true;
+      }
 
-      ent.value.boolean = true;
       ds.drop( 4 );
-      
-      ent.rawStrWithLoc.drop_back( ds.size() );
     }
     break;
 
@@ -759,13 +775,15 @@ inline void JSONEnt::ConsumeEntity(
         )
         throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected 'false'") );
 
-      ent.type = JSONEnt::Type_Boolean;
-      ent.rawStrWithLoc = ds;
-      ent.value.boolean = false;
+      if ( ent )
+      {
+        ent->type = JSONEnt::Type_Boolean;
+        ent->rawStrWithLoc = ds;
+        ent->rawStrWithLoc.drop_back( ds.size() - 5 );
+        ent->value.boolean = false;
+      }
 
       ds.drop( 5 );
-      
-      ent.rawStrWithLoc.drop_back( ds.size() );
     }
     break;
 
@@ -781,7 +799,8 @@ inline void JSONEnt::ConsumeEntity(
     case '8':
     case '9':
     {
-      ent.rawStrWithLoc = ds;
+      if ( ent )
+        ent->rawStrWithLoc = ds;
 
       if ( !ds.empty() && ds.front() == '-' )
       {
@@ -817,21 +836,25 @@ inline void JSONEnt::ConsumeEntity(
       if ( ds.empty()
         || (ds.front() != '.' && ds.front() != 'e' && ds.front() != 'E') )
       {
-        ent.type = JSONEnt::Type_Int32;
+        if ( ent )
+        {
+          ent->type = JSONEnt::Type_Int32;
 
-        static const uint32_t maxIntegerLength = 15;
-        uint32_t length = ent.rawStrWithLoc.size() - ds.size();
-        if ( length > maxIntegerLength )
-          throw JSONMalformedException( ds.line, ds.column, FTL_STR("integer too long") );
+          static const uint32_t maxIntegerLength = 15;
+          uint32_t length = ent->rawStrWithLoc.size() - ds.size();
+          if ( length > maxIntegerLength )
+            throw JSONMalformedException( ds.line, ds.column, FTL_STR("integer too long") );
 
-        char buf[maxIntegerLength+1];
-        memcpy( buf, ent.rawStrWithLoc.data(), length );
-        buf[length] = '\0';
-        ent.value.int32 = atoi( buf );
+          char buf[maxIntegerLength+1];
+          memcpy( buf, ent->rawStrWithLoc.data(), length );
+          buf[length] = '\0';
+          ent->value.int32 = atoi( buf );
+        }
       }
       else
       {
-        ent.type = JSONEnt::Type_Float64;
+        if ( ent )
+          ent->type = JSONEnt::Type_Float64;
 
         if ( ds.front() == '.' )
         {
@@ -865,22 +888,26 @@ inline void JSONEnt::ConsumeEntity(
           }
         }
 
-        static const uint32_t maxScalarLength = 31;
-        uint32_t length = ent.rawStrWithLoc.size() - ds.size();
-        if ( length > maxScalarLength )
-          throw JSONMalformedException( ds.line, ds.column, FTL_STR("floating point too long") );
+        if ( ent )
+        {
+          static const uint32_t maxScalarLength = 31;
+          uint32_t length = ent->rawStrWithLoc.size() - ds.size();
+          if ( length > maxScalarLength )
+            throw JSONMalformedException( ds.line, ds.column, FTL_STR("floating point too long") );
 
-        char buf[maxScalarLength+1];
-        memcpy( buf, ent.rawStrWithLoc.data(), length );
-        buf[length] = '\0';
+          char buf[maxScalarLength+1];
+          memcpy( buf, ent->rawStrWithLoc.data(), length );
+          buf[length] = '\0';
 
-        char const *oldlocale = setlocale( LC_NUMERIC, "C" );
-        ent.value.float64 = atof( buf );
-        if ( oldlocale )
-          setlocale( LC_NUMERIC, oldlocale );
+          char const *oldlocale = setlocale( LC_NUMERIC, "C" );
+          ent->value.float64 = atof( buf );
+          if ( oldlocale )
+            setlocale( LC_NUMERIC, oldlocale );
+        }
       }
       
-      ent.rawStrWithLoc.drop_back( ds.size() );
+      if ( ent )
+        ent->rawStrWithLoc.drop_back( ds.size() );
     }
     break;
 
@@ -891,9 +918,12 @@ inline void JSONEnt::ConsumeEntity(
 
     case '{':
     {
-      ent.type = JSONEnt::Type_Object;
-      ent.rawStrWithLoc = ds;
-      ent.value.object.size = 0;
+      if ( ent )
+      {
+        ent->type = JSONEnt::Type_Object;
+        ent->rawStrWithLoc = ds;
+        ent->value.object.size = 0;
+      }
 
       ds.drop();
 
@@ -913,32 +943,35 @@ inline void JSONEnt::ConsumeEntity(
 
           default:
           {
-            JSONEnt keyEntity;
-            ConsumeString( ds, keyEntity );
+            ConsumeEntity( ds, 0 );
 
             SkipWhitespace( ds );
             ConsumeColon( ds );
             SkipWhitespace( ds );
 
-            JSONEnt valueEntity;
-            ConsumeEntity( ds, valueEntity );
+            ConsumeEntity( ds, 0 );
 
-            ++ent.value.object.size;
+            if ( ent )
+              ++ent->value.object.size;
 
             break;
           }
         }
       }
       
-      ent.rawStrWithLoc.drop_back( ds.size() );
+      if ( ent )
+        ent->rawStrWithLoc.drop_back( ds.size() );
     }
     break;
 
     case '[':
     {
-      ent.type = JSONEnt::Type_Array;
-      ent.rawStrWithLoc = ds;
-      ent.value.array.size = 0;
+      if ( ent )
+      {
+        ent->type = JSONEnt::Type_Array;
+        ent->rawStrWithLoc = ds;
+        ent->value.array.size = 0;
+      }
 
       ds.drop();
 
@@ -947,7 +980,7 @@ inline void JSONEnt::ConsumeEntity(
       {
         SkipWhitespace( ds );
         if ( ds.empty() )
-          throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected ent or ']'") );
+          throw JSONMalformedException( ds.line, ds.column, FTL_STR("expected entity or ']'") );
 
         switch ( ds.front() )
         {
@@ -958,17 +991,18 @@ inline void JSONEnt::ConsumeEntity(
 
           default:
           {
-            JSONEnt elementEntity;
-            ConsumeEntity( ds, elementEntity );
+            ConsumeEntity( ds, 0 );
 
-            ++ent.value.array.size;
+            if ( ent )
+              ++ent->value.array.size;
 
             break;
           }
         }
       }
       
-      ent.rawStrWithLoc.drop_back( ds.size() );
+      if ( ent )
+        ent->rawStrWithLoc.drop_back( ds.size() );
     }
     break;
 
@@ -1055,7 +1089,7 @@ public:
     if ( m_ds.empty() )
       return false;
 
-    JSONEnt::ConsumeEntity( m_ds, ent );
+    JSONEnt::ConsumeEntity( m_ds, &ent );
 
     return true;
   }
@@ -1086,7 +1120,7 @@ public:
     if ( m_ds.empty() || m_ds.front() == '}' )
       return false;
 
-    JSONEnt::ConsumeString( m_ds, key );
+    JSONEnt::ConsumeString( m_ds, &key );
 
     m_lastKeyShortData = key.value.string.shortData;
     m_lastKeyLength = key.value.string.length;
@@ -1095,7 +1129,7 @@ public:
     JSONEnt::ConsumeColon( m_ds );
     JSONEnt::SkipWhitespace( m_ds );
 
-    JSONEnt::ConsumeEntity( m_ds, value );
+    JSONEnt::ConsumeEntity( m_ds, &value );
 
     return true;
   }
@@ -1128,7 +1162,7 @@ public:
     if ( m_ds.empty() || m_ds.front() == ']' )
       return false;
 
-    JSONEnt::ConsumeEntity( m_ds, element );
+    JSONEnt::ConsumeEntity( m_ds, &element );
 
     m_lastIndex = ++m_count;
 
