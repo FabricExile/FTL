@@ -185,16 +185,16 @@ public:
     return 0;
   }
 
-  int operator<( StrRef that ) const
+  bool operator<( StrRef that ) const
     { return compare( that ) < 0; }
 
-  int operator<=( StrRef that ) const
+  bool operator<=( StrRef that ) const
     { return compare( that ) <= 0; }
 
-  int operator>( StrRef that ) const
+  bool operator>( StrRef that ) const
     { return compare( that ) > 0; }
 
-  int operator>=( StrRef that ) const
+  bool operator>=( StrRef that ) const
     { return compare( that ) >= 0; }
 
   size_t hash() const
