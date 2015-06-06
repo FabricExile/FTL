@@ -156,6 +156,17 @@ public:
         );
   }
 
+  StrRef substr( unsigned int start, unsigned int length = UINT_MAX ) const
+  {
+    if( start > size() || length == 0 )
+      return "";
+
+    if( start + length >= size() )
+      return StrRef( begin() + start, end() );
+    else
+      return StrRef( begin() + start, begin() + start + length - 1 );
+  }
+
   bool equals( StrRef that ) const
     { return _size == that._size
       && memcmp( _data, that._data, _size ) == 0; }
