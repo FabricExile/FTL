@@ -164,7 +164,7 @@ public:
     if( start + length >= size() )
       return StrRef( begin() + start, end() );
     else
-      return StrRef( begin() + start, begin() + start + length - 1 );
+      return StrRef( begin() + start, begin() + start + length );
   }
 
   bool equals( StrRef that ) const
