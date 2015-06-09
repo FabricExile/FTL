@@ -167,6 +167,11 @@ public:
       return StrRef( begin() + start, begin() + start + length );
   }
 
+  bool contains( char ch )
+  {
+    return find(ch) != end();
+  }
+
   bool equals( StrRef that ) const
     { return _size == that._size
       && memcmp( _data, that._data, _size ) == 0; }
