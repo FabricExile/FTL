@@ -186,7 +186,7 @@ public:
     { return equals( that ); }
 
   bool operator!=( StrRef that ) const
-    { return equals( that ); }
+    { return !equals( that ); }
 
   int compare( StrRef that ) const
   {
