@@ -250,6 +250,9 @@ public:
   void setValue( StrRef value )
     { m_value = value; }
 
+  bool empty() const
+    { return m_value.empty(); }
+
   virtual void encode( JSONEnc<std::string> &enc ) const
     { JSONStringEnc<std::string> stringEnc( enc, StrRef( m_value ) ); }
 
@@ -293,13 +296,27 @@ public:
   size_t size() const
     { return m_vec.size(); }
 
-  JSONValue *operator[]( size_t index ) const
+  JSONValue const *get( size_t index ) const
   {
     if ( index < m_vec.size() )
       return m_vec[index];
     else
       throw JSONInvalidIndexException( index );
   }
+
+  JSONValue const *operator[]( size_t index ) const
+    { return get( index ); }
+
+  JSONValue *get( size_t index )
+  {
+    if ( index < m_vec.size() )
+      return m_vec[index];
+    else
+      throw JSONInvalidIndexException( index );
+  }
+
+  JSONValue *operator[]( size_t index )
+    { return get( index ); }
 
   typedef Vec::const_iterator const_iterator;
 
@@ -427,6 +444,14 @@ public:
   {
     JSONValue const *jsonValue = get( key );
     StrRef result = jsonValue->cast<JSONString>()->getValue();
+    return result;
+  }
+
+  StrRef getStringOrEmpty( StrRef key ) const
+  {
+    StrRef result;
+    if ( JSONString const *jsonString = get( key )->maybeCast<JSONString>() )
+      result = jsonString->getValue();
     return result;
   }
 
