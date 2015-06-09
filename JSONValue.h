@@ -5,10 +5,11 @@
 #ifndef _FTL_JSONValue_h
 #define _FTL_JSONValue_h
 
-#include <FTL/OrderedStringMap.h>
-#include <FTL/OwnedPtr.h>
+#include <FTL/CStrRef.h>
 #include <FTL/JSONDec.h>
 #include <FTL/JSONEnc.h>
+#include <FTL/OrderedStringMap.h>
+#include <FTL/OwnedPtr.h>
 
 FTL_NAMESPACE_BEGIN
 
@@ -244,7 +245,7 @@ public:
     return result;
   }
 
-  StrRef getValue() const
+  CStrRef getValue() const
     { return m_value; }
 
   void setValue( StrRef value )
@@ -432,7 +433,7 @@ public:
     return result;
   }
     
-  bool maybeGetString( StrRef key, StrRef &value ) const
+  bool maybeGetString( StrRef key, CStrRef &value ) const
   {
     JSONValue const *jsonValue = maybeGet( key );
     if ( jsonValue )
@@ -440,16 +441,16 @@ public:
     return !!jsonValue;
   }
 
-  StrRef getString( StrRef key ) const
+  CStrRef getString( StrRef key ) const
   {
     JSONValue const *jsonValue = get( key );
-    StrRef result = jsonValue->cast<JSONString>()->getValue();
+    CStrRef result = jsonValue->cast<JSONString>()->getValue();
     return result;
   }
 
-  StrRef getStringOrEmpty( StrRef key ) const
+  CStrRef getStringOrEmpty( StrRef key ) const
   {
-    StrRef result;
+    CStrRef result;
     if ( JSONString const *jsonString = get( key )->maybeCast<JSONString>() )
       result = jsonString->getValue();
     return result;
