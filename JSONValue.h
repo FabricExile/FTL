@@ -101,6 +101,8 @@ public:
     encode( je );
   }
 
+  FTL::CStrRef getStringValue() const;
+
 protected:
 
   JSONValue( Type type )
@@ -261,6 +263,11 @@ private:
 
   std::string m_value;
 };
+
+inline FTL::CStrRef JSONValue::getStringValue() const
+{
+  return cast<FTL::JSONString>()->getValue();
+}
 
 class JSONArray : public JSONValue
 {
