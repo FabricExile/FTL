@@ -8,6 +8,8 @@
 #include <FTL/ArrayRef.h>
 #include <FTL/JSONFormat.h>
 
+#include <stdio.h>
+
 //
 // Usage:
 //

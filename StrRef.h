@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <iostream>
+#include <limits.h>
 #include <string>
 #include <string.h>
 
