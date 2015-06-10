@@ -415,15 +415,9 @@ public:
     m_map.clear();
   }
 
-  bool insertTakingKey( std::string &key, JSONValue *value )
-  {
-    return m_map.insertTakingKey( key, value );
-  }
-
   bool insert( StrRef key, JSONValue *value )
   {
-    std::string keyString = key;
-    return insertTakingKey( keyString, value );
+    return m_map.insert( key, value );
   }
 
   JSONValue const *maybeGet( StrRef key ) const
@@ -525,10 +519,19 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
       {
         if ( !keyJE.isString() )
           throw JSONInternalErrorException();
-        std::string key;
-        keyJE.stringAppendTo( key );
+        FTL::StrRef key;
+        if ( keyJE.stringIsShort() )
+          key = FTL::StrRef( keyJE.stringShortData(), keyJE.stringLength() );
+        else
+        {
+          char *longKeyCStr = static_cast<char *>(
+            alloca( keyJE.stringLength() + 1 )
+            );
+          keyJE.stringGetData( longKeyCStr );
+          key = FTL::StrRef( longKeyCStr, keyJE.stringLength() );
+        }
         JSONValue *value = Create( valueJE );
-        if ( !object->insertTakingKey( key, value ) )
+        if ( !object->insert( key, value ) )
         {
           delete value;
           throw JSONMalformedException(

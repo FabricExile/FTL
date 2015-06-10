@@ -5,7 +5,7 @@
 #ifndef _FTL_OrderedStringMap_h
 #define _FTL_OrderedStringMap_h
 
-#include <FTL/StrRef.h>
+#include <FTL/CStrRef.h>
 #include <map>
 #include <string>
 #if defined(FTL_PLATFORM_WINDOWS)
@@ -23,7 +23,7 @@ class OrderedStringMap
   OrderedStringMap( OrderedStringMap const & );
   OrderedStringMap &operator=( OrderedStringMap const & );
 
-  typedef std::pair<std::string, ValueTy> KV;
+  typedef std::pair<CStrRef, ValueTy> KV;
   typedef std::vector<KV> Vec;
 #if defined(FTL_PLATFORM_WINDOWS)
   typedef std::unordered_map<
@@ -39,7 +39,7 @@ class OrderedStringMap
 public:
 
   OrderedStringMap() {}
-  ~OrderedStringMap() {}
+  ~OrderedStringMap() { clear(); }
 
   bool empty() const
     { return m_vec.empty(); }
@@ -70,31 +70,31 @@ public:
   void clear()
   {
     m_map.clear();
+    for ( typename Vec::iterator it = m_vec.begin(); it != m_vec.end(); ++it )
+      delete [] it->first.c_str();
     m_vec.clear();
   }
 
-  bool insertTakingKey( std::string &key, ValueTy const &value )
+  bool insert( StrRef key, ValueTy const &value )
   {
+    char *keyCStr = new char[key.size()+1];
+    memcpy( keyCStr, key.data(), key.size() );
+    keyCStr[key.size()] = '\0';
+
     size_t index = m_vec.size();
     m_vec.resize( index + 1 );
     KV &kv = m_vec[index];
-    kv.first.swap( key );
+    kv.first = CStrRef( keyCStr, key.size() );
     kv.second = value;
     std::pair<Map::iterator, bool> insertResult = m_map.insert(
       std::pair<StrRef, size_t>( kv.first, index )
       );
     if ( !insertResult.second )
     {
-      kv.first.swap( key );
+      delete [] keyCStr;
       m_vec.resize( index );
     }
     return insertResult.second;
-  }
-
-  bool insert( StrRef key, ValueTy const &value )
-  {
-    std::string keyString = key;
-    return insertTakingKey( keyString, value );
   }
 
 private:
