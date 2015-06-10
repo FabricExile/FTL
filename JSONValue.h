@@ -439,7 +439,30 @@ public:
       throw JSONKeyNotFoundException( key );
     return result;
   }
-    
+  
+  bool getBoolean( StrRef key ) const
+  {
+    JSONValue const *jsonValue = get( key );
+    bool result = jsonValue->cast<JSONBoolean>()->getValue();
+    return result;
+  }
+  
+  int32_t getSInt32( StrRef key ) const
+  {
+    JSONValue const *jsonValue = get( key );
+    int32_t result = jsonValue->cast<JSONSInt32>()->getValue();
+    return result;
+  }
+  
+  double getFloat64( StrRef key ) const
+  {
+    JSONValue const *jsonValue = get( key );
+    if ( JSONSInt32 const *jsonSInt32 = jsonValue->maybeCast<JSONSInt32>() )
+      return (double)jsonSInt32->getValue();
+    double result = jsonValue->cast<JSONFloat64>()->getValue();
+    return result;
+  }
+  
   bool maybeGetString( StrRef key, CStrRef &value ) const
   {
     JSONValue const *jsonValue = maybeGet( key );
