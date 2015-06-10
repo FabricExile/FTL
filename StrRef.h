@@ -191,7 +191,7 @@ public:
 
   int compare( StrRef that ) const
   {
-    size_t minSize = std::min( _size, that._size );
+    size_t minSize = (std::min)( _size, that._size );
     int result = memcmp( _data, that._data, minSize );
     if ( result != 0 )
       return result;

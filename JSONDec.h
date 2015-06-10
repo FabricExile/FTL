@@ -132,7 +132,7 @@ public:
       memcpy(
         value.string.shortData,
         that.value.string.shortData,
-        std::min( value.string.length, JSONDecShortStringMaxLength )
+        (std::min)( value.string.length, JSONDecShortStringMaxLength )
         );
       break;
     case Type_Object:
@@ -243,7 +243,7 @@ public:
       return false;
     if ( memcmp(
       str.data(), value.string.shortData,
-      std::min( str.size(), size_t(JSONDecShortStringMaxLength) )
+      (std::min)( str.size(), size_t(JSONDecShortStringMaxLength) )
       ) != 0 )
       return false;
     if ( value.string.length > JSONDecShortStringMaxLength )
