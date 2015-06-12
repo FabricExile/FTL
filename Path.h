@@ -47,7 +47,12 @@ inline std::string PathJoin(
 
 inline std::pair<StrRef, StrRef> PathSplit( StrRef path )
 {
-  return path.rsplit( PathSep );
+  std::pair<StrRef, StrRef> a = path.rsplit('\\');
+  std::pair<StrRef, StrRef> b = path.rsplit('/');
+  if(a.first.size() > b.first.size())
+    return a;
+  else
+    return b;
 }
 
 typedef
