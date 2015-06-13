@@ -93,15 +93,20 @@ public:
     return result;
   }
 
-  virtual void encode( JSONEnc<std::string> &je ) const = 0;
-
-  void encode( std::string &string ) const
-  {
-    JSONEnc<std::string> je( string );
-    encode( je );
-  }
-
+  bool getBooleanValue() const;
+  int32_t getSInt32Value() const;
+  double getFloat64Value() const;
   FTL::CStrRef getStringValue() const;
+
+  virtual void encodeTo( JSONEnc<std::string> &je ) const = 0;
+
+  std::string encode() const
+  {
+    std::string result;
+    JSONEnc<std::string> je( result );
+    encodeTo( je );
+    return result;
+  }
 
 protected:
 
@@ -126,7 +131,9 @@ public:
   JSONNull()
     : JSONValue( Type_Null ) {}
 
-  virtual void encode( JSONEnc<std::string> &enc ) const
+protected:
+
+  virtual void encodeTo( JSONEnc<std::string> &enc ) const
     { JSONNullEnc<std::string> nullEnc( enc ); }
 };
 
@@ -153,13 +160,20 @@ public:
   void setValue( bool value )
     { m_value = value; }
 
-  virtual void encode( JSONEnc<std::string> &enc ) const
+protected:
+
+  virtual void encodeTo( JSONEnc<std::string> &enc ) const
     { JSONBooleanEnc<std::string> booleanEnc( enc, m_value ); }
 
 private:
 
   bool m_value;
 };
+
+inline bool JSONValue::getBooleanValue() const
+{
+  return cast<FTL::JSONBoolean>()->getValue();
+}
 
 class JSONSInt32 : public JSONValue
 {
@@ -184,13 +198,20 @@ public:
   void setValue( int32_t value )
     { m_value = value; }
 
-  virtual void encode( JSONEnc<std::string> &enc ) const
+protected:
+
+  virtual void encodeTo( JSONEnc<std::string> &enc ) const
     { JSONSInt32Enc<std::string> sint32Enc( enc, m_value ); }
 
 private:
 
   int32_t m_value;
 };
+
+inline int32_t JSONValue::getSInt32Value() const
+{
+  return cast<FTL::JSONSInt32>()->getValue();
+}
 
 class JSONFloat64 : public JSONValue
 {
@@ -215,13 +236,20 @@ public:
   void setValue( double value )
     { m_value = value; }
 
-  virtual void encode( JSONEnc<std::string> &enc ) const
+protected:
+
+  virtual void encodeTo( JSONEnc<std::string> &enc ) const
     { JSONFloat64Enc<std::string> float64Enc( enc, m_value ); }
 
 private:
 
   double m_value;
 };
+
+inline double JSONValue::getFloat64Value() const
+{
+  return cast<FTL::JSONFloat64>()->getValue();
+}
 
 class JSONString : public JSONValue
 {
@@ -256,7 +284,9 @@ public:
   bool empty() const
     { return m_value.empty(); }
 
-  virtual void encode( JSONEnc<std::string> &enc ) const
+protected:
+
+  virtual void encodeTo( JSONEnc<std::string> &enc ) const
     { JSONStringEnc<std::string> stringEnc( enc, StrRef( m_value ) ); }
 
 private:
@@ -286,17 +316,6 @@ public:
 
   ~JSONArray()
     { clear(); }
-
-  virtual void encode( JSONEnc<std::string> &enc ) const
-  {
-    JSONArrayEnc<std::string> arrayEnc( enc );
-    for ( Vec::const_iterator it = m_vec.begin(); it != m_vec.end(); ++it )
-    {
-      JSONValue const *value = *it;
-      JSONEnc<std::string> elementEnc( arrayEnc );
-      value->encode( elementEnc );
-    }
-  }
 
   bool empty() const
     { return m_vec.empty(); }
@@ -347,6 +366,19 @@ public:
   void push_back( JSONValue *jsonValue )
     { m_vec.push_back( jsonValue ); }
 
+protected:
+
+  virtual void encodeTo( JSONEnc<std::string> &enc ) const
+  {
+    JSONArrayEnc<std::string> arrayEnc( enc );
+    for ( Vec::const_iterator it = m_vec.begin(); it != m_vec.end(); ++it )
+    {
+      JSONValue const *value = *it;
+      JSONEnc<std::string> elementEnc( arrayEnc );
+      value->encodeTo( elementEnc );
+    }
+  }
+
 private:
 
   Vec m_vec;
@@ -375,18 +407,6 @@ public:
 
   ~JSONObject()
     { clear(); }
-
-  virtual void encode( JSONEnc<std::string> &enc ) const
-  {
-    JSONObjectEnc<std::string> objectEnc( enc );
-    for ( Map::const_iterator it = m_map.begin(); it != m_map.end(); ++it )
-    {
-      StrRef key = it->first;
-      JSONValue const *value = it->second;
-      JSONEnc<std::string> memberEnc( objectEnc, key );
-      value->encode( memberEnc );
-    }
-  }
 
   bool empty() const
     { return m_map.empty(); }
@@ -492,6 +512,20 @@ public:
     if ( JSONString const *jsonString = get( key )->maybeCast<JSONString>() )
       result = jsonString->getValue();
     return result;
+  }
+
+protected:
+
+  virtual void encodeTo( JSONEnc<std::string> &enc ) const
+  {
+    JSONObjectEnc<std::string> objectEnc( enc );
+    for ( Map::const_iterator it = m_map.begin(); it != m_map.end(); ++it )
+    {
+      StrRef key = it->first;
+      JSONValue const *value = it->second;
+      JSONEnc<std::string> memberEnc( objectEnc, key );
+      value->encodeTo( memberEnc );
+    }
   }
 
 private:

@@ -41,9 +41,7 @@ void catJSON( FILE *fp )
         );
       if ( !jsonValue )
         break;
-      std::string string;
-      jsonValue->encode( string );
-      std::cout << string << '\n';
+      std::cout << jsonValue->encode() << '\n';
     }
     catch ( FTL::JSONException e )
     {
