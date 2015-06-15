@@ -457,6 +457,20 @@ public:
     return result;
   }
   
+  JSONObject const * getObject( StrRef key ) const
+  {
+    JSONValue const *jsonValue = get( key );
+    return jsonValue->cast<JSONObject>();
+  }
+
+  JSONObject const * maybeGetObject( StrRef key ) const
+  {
+    JSONValue const *jsonValue = maybeGet( key );
+    if( jsonValue )
+      return jsonValue->maybeCast<JSONObject>();
+    return NULL;
+  }
+  
   bool maybeGetString( StrRef key, CStrRef &value ) const
   {
     JSONValue const *jsonValue = maybeGet( key );
