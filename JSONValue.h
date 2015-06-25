@@ -440,6 +440,15 @@ public:
     bool result = jsonValue->cast<JSONBoolean>()->getValue();
     return result;
   }
+
+  bool getBooleanOrFalse( StrRef key ) const
+  {
+    JSONValue const *jsonValue = maybeGet( key );
+    if(!jsonValue)
+      return false;
+    bool result = jsonValue->cast<JSONBoolean>()->getValue();
+    return result;
+  }
   
   int32_t getSInt32( StrRef key ) const
   {
@@ -489,8 +498,13 @@ public:
   CStrRef getStringOrEmpty( StrRef key ) const
   {
     CStrRef result;
-    if ( JSONString const *jsonString = get( key )->maybeCast<JSONString>() )
-      result = jsonString->getValue();
+    JSONValue const *jsonValue = maybeGet( key );
+    if ( jsonValue )
+    {
+      JSONString const *jsonString = jsonValue->maybeCast<JSONString>();
+      if(jsonString)
+        result = jsonString->getValue();
+    }
     return result;
   }
 
