@@ -5,6 +5,8 @@
 #ifndef _FTL_JSONFormat_h
 #define _FTL_JSONFormat_h
 
+#include <FTL/StrRef.h>
+
 FTL_NAMESPACE_BEGIN
 
 struct JSONFormat
