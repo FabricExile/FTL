@@ -6,6 +6,7 @@
 #define _FTL_JSONEnc_h
 
 #include <FTL/ArrayRef.h>
+#include <FTL/JSONException.h>
 #include <FTL/JSONFormat.h>
 
 #include <stdio.h>
