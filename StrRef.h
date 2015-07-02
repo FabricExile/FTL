@@ -116,6 +116,45 @@ public:
     return find<MatchChar>( begin(), end() );
   }
 
+  size_t count( IT b, IT e, char ch ) const
+  {
+    size_t result = 0;
+    IT it = b;
+    while ( it != e )
+    {
+      if ( *it == ch )
+        ++result;
+      ++it;
+    }
+    return result;
+  }
+
+  size_t count( char ch ) const
+  {
+    return count( begin(), end(), ch );
+  }
+
+  template<typename MatchChar>
+  size_t count( IT b, IT e ) const
+  {
+    MatchChar const mc;
+    size_t result = 0;
+    IT it = b;
+    while ( it != e )
+    {
+      if ( mc( *it ) )
+        ++result;
+      ++it;
+    }
+    return result;
+  }
+
+  template<typename MatchChar>
+  size_t count() const
+  {
+    return count<MatchChar>( begin(), end() );
+  }
+
   std::pair<StrRef, StrRef> split( char ch ) const
   {
     IT it = find( ch );

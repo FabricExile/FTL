@@ -10,6 +10,7 @@
 #include <FTL/JSONFormat.h>
 
 #include <stdio.h>
+#include <string>
 
 //
 // Usage:
@@ -27,34 +28,34 @@
 
 FTL_NAMESPACE_BEGIN
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONElementEnc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONNullEnc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONBooleanEnc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONSInt32Enc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONFloat64Enc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONStringEnc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONListEnc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONObjectEnc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONArrayEnc;
 
-template<typename StringTy>
+template<typename StringTy = std::string>
 class JSONEnc
 {
   friend class JSONElementEnc<StringTy>;
