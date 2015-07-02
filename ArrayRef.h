@@ -6,6 +6,7 @@
 #define _FTL_ArrayRef_h
 
 #include <FTL/Config.h>
+#include <assert.h>
 
 FTL_NAMESPACE_BEGIN
 
