@@ -36,8 +36,8 @@
 
 // Some missing POSIX-y functions
 #include <math.h>
-static inline double round( double x ) { return floor(x+0.5); }
-static inline float roundf( float x ) { return floorf(x+0.5f); }
+inline double round( double x ) { return floor(x+0.5); }
+inline float roundf( float x ) { return floorf(x+0.5f); }
 #define snprintf _snprintf
 
 #else
