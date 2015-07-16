@@ -6,6 +6,7 @@
 #define _FTL_StrRef_h
 
 #include <FTL/Config.h>
+#include <FTL/MatchCharWhitespace.h>
 
 #include <algorithm>
 #include <assert.h>
@@ -155,13 +156,15 @@ public:
     return count<MatchChar>( begin(), end() );
   }
 
-  std::pair<StrRef, StrRef> split( char ch ) const
+  typedef std::pair<StrRef, StrRef> Split;
+
+  Split split( char ch ) const
   {
     IT it = find( ch );
     if ( it == end() )
-      return std::pair<StrRef, StrRef>( *this, StrRef() );
+      return Split( *this, StrRef() );
     else
-      return std::pair<StrRef, StrRef>(
+      return Split(
         StrRef( begin(), it ),
         StrRef( it + 1, end() )
         );
@@ -184,13 +187,13 @@ public:
     return rfind( rbegin(), rend(), ch );
   }
 
-  std::pair<StrRef, StrRef> rsplit( char ch ) const
+  Split rsplit( char ch ) const
   {
     RIT it = rfind( ch );
     if ( it == rend() )
-      return std::pair<StrRef, StrRef>( StrRef(), *this );
+      return Split( StrRef(), *this );
     else
-      return std::pair<StrRef, StrRef>(
+      return Split(
         StrRef( it + 1, rend() ),
         StrRef( rbegin(), it )
         );
@@ -273,6 +276,40 @@ public:
       { return str.hash(); }
   };
 
+  template<typename MatchChar>
+  StrRef ltrimMatch() const
+  {
+    MatchChar const mc;
+    IT it = begin();
+    for ( ; it != end() && mc( *it ); ++it ) ;
+    return StrRef( it, end() );
+  }
+
+  StrRef ltrim() const
+    { return ltrimMatch<MatchCharWhitespace>(); }
+
+  template<typename MatchChar>
+  StrRef rtrimMatch() const
+  {
+    MatchChar const mc;
+    RIT it = rbegin();
+    for ( ; it != rend() && mc( *it ); ++it ) ;
+    return StrRef( it, rend() );
+  }
+
+  StrRef rtrim() const
+    { return rtrimMatch<MatchCharWhitespace>(); }
+
+  template<typename MatchChar>
+  StrRef trimMatch() const
+  {
+    StrRef partial = ltrimMatch<MatchChar>();
+    return partial.rtrimMatch<MatchChar>();
+  }
+
+  StrRef trim() const
+    { return trimMatch<MatchCharWhitespace>(); }
+
   operator std::string() const
   {
     return std::string( begin(), end() );
@@ -291,25 +328,27 @@ public:
 
   char const *c_str() const { return data(); }
 
-  std::pair<StrRef, CStrRef> split( char ch ) const
+  typedef std::pair<StrRef, CStrRef> Split;
+
+  Split split( char ch ) const
   {
     IT it = find( ch );
     if ( it == end() )
-      return std::pair<StrRef, CStrRef>( *this, CStrRef() );
+      return Split( *this, CStrRef() );
     else
-      return std::pair<StrRef, CStrRef>(
+      return Split(
         StrRef( begin(), it ),
         CStrRef( it + 1, end() )
         );
   }
 
-  std::pair<StrRef, CStrRef> rsplit( char ch ) const
+  Split rsplit( char ch ) const
   {
     RIT it = rfind( ch );
     if ( it == rend() )
-      return std::pair<StrRef, CStrRef>( StrRef(), *this );
+      return Split( StrRef(), *this );
     else
-      return std::pair<StrRef, CStrRef>(
+      return Split(
         StrRef( it + 1, rend() ),
         CStrRef( rbegin(), it )
         );
