@@ -90,6 +90,9 @@ public:
     assert( size() >= count );
     return ArrayRef( begin(), end() - count );
   }
+
+  ArrayRef head( size_t count ) const
+    { return ArrayRef( begin(), begin() + std::min( size(), count ) ); }
 };
 
 FTL_NAMESPACE_END
