@@ -12,8 +12,9 @@
 #include <assert.h>
 #include <iostream>
 #include <limits.h>
-#include <string>
+#include <locale.h>
 #include <string.h>
+#include <string>
 
 FTL_NAMESPACE_BEGIN
 
@@ -21,6 +22,17 @@ class StrRef
 {
   char const *_data;
   size_t _size;
+
+protected:
+
+  static double SafeATOF( char const *cStr )
+  {
+    char const *oldLocale = ::setlocale( LC_NUMERIC, "C" );
+    double result = ::atof( cStr );
+    if ( oldLocale )
+      ::setlocale( LC_NUMERIC, oldLocale );
+    return result;
+  }
 
 public:
 
@@ -156,6 +168,22 @@ public:
     return count<MatchChar>( begin(), end() );
   }
 
+  double toFloat64() const
+  {
+    static const size_t allocaMaxSize = 1024;
+    size_t allocSize = _size + 1;
+    char *cStr;
+    if ( allocSize > allocaMaxSize )
+      cStr = (char *)( malloc( allocSize ) );
+    else
+      cStr = (char *)( alloca( allocSize ) );
+    memcpy( cStr, _data, _size );
+    cStr[_size] = '\0';
+    if ( allocSize > allocaMaxSize )
+      free( cStr );
+    return SafeATOF( cStr );
+  }
+
   typedef std::pair<StrRef, StrRef> Split;
 
   Split split( char ch ) const
@@ -168,6 +196,12 @@ public:
         StrRef( begin(), it ),
         StrRef( it + 1, end() )
         );
+  }
+
+  Split trimSplit( char ch ) const
+  {
+    Split result = split( ch );
+    return Split( result.first.trim(), result.second.trim() );
   }
 
   RIT rfind( RIT rb, RIT re, char ch ) const
@@ -327,6 +361,9 @@ public:
   CStrRef( std::string const &str ) : StrRef( str.c_str(), str.size() ) {}
 
   char const *c_str() const { return data(); }
+
+  double toFloat64() const
+    { return SafeATOF( c_str() ); }
 
   typedef std::pair<StrRef, CStrRef> Split;
 
