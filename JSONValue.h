@@ -485,6 +485,18 @@ public:
     double result = jsonValue->cast<JSONFloat64>()->getValue();
     return result;
   }
+
+  double getFloat64OrDefault( StrRef key, double defaultValue ) const
+  {
+    JSONValue const *jsonValue = maybeGet( key );
+    if( !jsonValue )
+      return defaultValue;
+    if ( JSONSInt32 const *jsonSInt32 = jsonValue->maybeCast<JSONSInt32>() )
+      return (double)jsonSInt32->getValue();
+    if ( JSONFloat64 const *jsonFloat64 = jsonValue->maybeCast<JSONFloat64>() )
+      return (double)jsonFloat64->getValue();
+    return defaultValue;
+  }
   
   JSONObject const * getObject( StrRef key ) const
   {
