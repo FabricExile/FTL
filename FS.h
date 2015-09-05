@@ -7,6 +7,7 @@
 
 #include <FTL/Config.h>
 #include <FTL/Path.h>
+#include <FTL/CStrRef.h>
 
 #include <string>
 #include <string.h>
@@ -272,6 +273,33 @@ inline bool FSDirAppendEntries(
   memcpy( pathCStr, pathStr.data(), pathStr.size() );
   pathCStr[pathStr.size()] = '\0';
   return FSDirAppendEntries( pathCStr, entries );
+}
+
+inline bool FSMaybeDeleteFile(
+  FTL::CStrRef filenameCStr
+  )
+{
+#if defined(FTL_PLATFORM_POSIX)
+  return ::unlink( filenameCStr.c_str() ) == 0;
+#elif defined(FTL_PLATFORM_WINDOWS)
+  return ::DeleteFileA( filenameCStr.c_str() );
+#endif
+}
+
+inline bool FSMaybeMoveFile(
+  FTL::CStrRef oldFilenameCStr,
+  FTL::CStrRef newFilenameCStr
+  )
+{
+#if defined(FTL_PLATFORM_POSIX)
+  return ::rename( oldFilenameCStr.c_str(), newFilenameCStr.c_str() ) == 0;
+#elif defined(FTL_PLATFORM_WINDOWS)
+  return ::MoveFileExA(
+    oldFilenameCStr.c_str(),
+    newFilenameCStr.c_str(),
+    MOVEFILE_REPLACE_EXISTING
+    );
+#endif
 }
 
 FTL_NAMESPACE_END
