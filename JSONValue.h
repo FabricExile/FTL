@@ -512,6 +512,20 @@ public:
     return NULL;
   }
   
+  JSONArray const * getArray( StrRef key ) const
+  {
+    JSONValue const *jsonValue = get( key );
+    return jsonValue->cast<JSONArray>();
+  }
+
+  JSONArray const * maybeGetArray( StrRef key ) const
+  {
+    JSONValue const *jsonValue = maybeGet( key );
+    if( jsonValue )
+      return jsonValue->maybeCast<JSONArray>();
+    return NULL;
+  }
+  
   bool maybeGetString( StrRef key, CStrRef &value ) const
   {
     JSONValue const *jsonValue = maybeGet( key );
