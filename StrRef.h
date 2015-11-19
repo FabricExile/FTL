@@ -409,6 +409,16 @@ inline bool operator!=( char const *lhs, FTL::StrRef rhs )
   return FTL::StrRef( lhs ) != rhs;
 }
 
+inline bool operator==( std::string const &lhs, FTL::StrRef rhs )
+{
+  return FTL::StrRef( lhs ) == rhs;
+}
+
+inline bool operator!=( std::string const &lhs, FTL::StrRef rhs )
+{
+  return FTL::StrRef( lhs ) != rhs;
+}
+
 inline std::string &operator+=( std::string &stdString, FTL::StrRef str )
 {
   return stdString.append( str.begin(), str.end() );

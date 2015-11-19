@@ -15,52 +15,92 @@
 FTL_NAMESPACE_BEGIN
 
 #if defined(FTL_PLATFORM_POSIX)
-static const char PathSep = '/';
+static const char PathSep_Platform = '/';
+static const char PathSep_NonPlatform = '\\';
 #elif defined(FTL_PLATFORM_WINDOWS)
-static const char PathSep = '\\';
+static const char PathSep_Platform = '\\';
+static const char PathSep_NonPlatform = '/';
 #else
 # error "Unsupported platform"
 #endif
 
+static const char PathSep_Override = '/';
+
+inline char PathSep( bool overridePlatform = false )
+{
+  return overridePlatform? PathSep_Override: PathSep_Platform;
+}
+
 template<typename StringTy>
 inline void PathAppendEntry(
   StringTy &path,
-  StrRef entry
+  StrRef entry,
+  bool overridePlatform = false
   )
 {
-  if ( (!entry.empty() && entry.front() != PathSep)
-    && (!path.empty() && path[path.size()-1] != PathSep) )
-    path += PathSep;
+  char pathSep = PathSep( overridePlatform );
+  if ( (!entry.empty() && entry.front() != pathSep)
+    && (!path.empty() && path[path.size()-1] != pathSep) )
+    path += pathSep;
   path += entry;
 }
 
 inline std::string PathJoin(
-  StrRef lhsPathStr,
-  StrRef rhsPathStr
+  StrRef pathStr0,
+  StrRef pathStr1,
+  bool overridePlatform = false
   )
 {
   std::string result;
-  PathAppendEntry( result, lhsPathStr );
-  PathAppendEntry( result, rhsPathStr );
+  PathAppendEntry( result, pathStr0, overridePlatform );
+  PathAppendEntry( result, pathStr1, overridePlatform );
   return result;
 }
 
-inline std::pair<StrRef, StrRef> PathSplit( StrRef path )
+inline std::string PathJoin(
+  StrRef pathStr0,
+  StrRef pathStr1,
+  StrRef pathStr2,
+  bool overridePlatform = false
+  )
 {
-  std::pair<StrRef, StrRef> a = path.rsplit('\\');
-  std::pair<StrRef, StrRef> b = path.rsplit('/');
-  if(a.first.size() > b.first.size())
-    return a;
-  else
-    return b;
+  std::string result;
+  PathAppendEntry( result, pathStr0, overridePlatform );
+  PathAppendEntry( result, pathStr1, overridePlatform );
+  PathAppendEntry( result, pathStr2, overridePlatform );
+  return result;
+}
+
+inline std::string PathJoin(
+  StrRef pathStr0,
+  StrRef pathStr1,
+  StrRef pathStr2,
+  StrRef pathStr3,
+  bool overridePlatform = false
+  )
+{
+  std::string result;
+  PathAppendEntry( result, pathStr0, overridePlatform );
+  PathAppendEntry( result, pathStr1, overridePlatform );
+  PathAppendEntry( result, pathStr2, overridePlatform );
+  PathAppendEntry( result, pathStr3, overridePlatform );
+  return result;
+}
+
+inline StrRef::Split PathSplit( StrRef path )
+{
+  std::pair<StrRef, StrRef> split = path.rsplit( PathSep_Platform );
+  if ( !split.second.empty() )
+    return split;
+  return path.rsplit( PathSep_NonPlatform );
 }
 
 typedef
 #if defined(FTL_PLATFORM_POSIX)
-  MatchPrefixChar< MatchCharSingle<PathSep> >
+  MatchPrefixChar< MatchCharSingle<PathSep_Platform> >
 #elif defined(FTL_PLATFORM_WINDOWS)
   MatchPrefixAny<
-    MatchPrefixChar< MatchCharSingle<PathSep> >,
+    MatchPrefixChar< MatchCharSingle<PathSep_Platform> >,
     MatchPrefixSeq<
       MatchPrefixChar<
         MatchCharAny<
