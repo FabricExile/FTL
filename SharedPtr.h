@@ -147,15 +147,14 @@ public:
     return isNull();
   }
 
-  ShareableTy &operator *() const
-  {
-    return *m_shareable;
-  }
+  ShareableTy *get() const
+    { return m_shareable; }
 
   ShareableTy *operator ->() const
-  {
-    return m_shareable;
-  }
+    { return m_shareable; }
+
+  ShareableTy &operator *() const
+    { return *m_shareable; }
 
   bool operator ==( SharedPtr<ShareableTy> const &that ) const
   {
