@@ -84,13 +84,27 @@ public:
     return _data[index];
   }
 
-  char front() const { return (*this)[0]; }
+  char front() const
+  {
+    assert( _size > 0 );
+    return (*this)[0];
+  }
   StrRef drop_front( size_t count = 1 ) const
-    { return StrRef( begin() + count, end() ); }
+  {
+    assert( _size >= count );
+    return StrRef( begin() + count, end() );
+  }
 
-  char back() const { return (*this)[0]; }
+  char back() const
+  {
+    assert( _size > 0 );
+    return (*this)[_size-1];
+  }
   StrRef drop_back( size_t count = 1 ) const
-    { return StrRef( begin(), end() - count ); }
+  {
+    assert( _size >= count );
+    return StrRef( begin(), end() - count );
+  }
 
   IT find( IT b, IT e, char ch ) const
   {
@@ -179,9 +193,10 @@ public:
       cStr = (char *)( alloca( allocSize ) );
     memcpy( cStr, _data, _size );
     cStr[_size] = '\0';
+    double result = SafeATOF( cStr );
     if ( allocSize > allocaMaxSize )
       free( cStr );
-    return SafeATOF( cStr );
+    return result;
   }
 
   typedef std::pair<StrRef, StrRef> Split;
