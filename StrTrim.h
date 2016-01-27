@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_StrTrim_h
-#define _FTL_StrTrim_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/MatchCharSingle.h>
@@ -85,5 +84,3 @@ void StrTrim( std::string &str )
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_StrTrim_h

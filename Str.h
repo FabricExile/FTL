@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_Str_h
-#define _FTL_Str_h
+#pragma once
 
 #include <FTL/StrCount.h>
 #include <FTL/StrFilter.h>
@@ -13,5 +12,3 @@
 #include <FTL/StrTrim.h>
 #include <FTL/StrTrimWhitespace.h>
 #include <FTL/StrToLower.h>
-
-#endif //_FTL_Str_h

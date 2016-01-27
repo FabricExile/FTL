@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_StrRef_h
-#define _FTL_StrRef_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/MatchCharWhitespace.h>
@@ -447,5 +446,3 @@ inline std::ostream &operator<<( std::ostream &os, FTL::StrRef str )
 }
 
 #define FTL_STR(x) (::FTL::CStrRef( (x), (sizeof(x) - 1) ))
-
-#endif //_FTL_StrRef_h

@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_JSONException_h
-#define _FTL_JSONException_h
+#pragma once
 
 #include <FTL/StrRef.h>
 
@@ -127,5 +126,3 @@ private:
 };
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_JSONException_h

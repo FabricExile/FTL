@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_Ticks_h
-#define _FTL_Ticks_h
+#pragma once
 
 #include <FTL/Config.h>
 
@@ -67,5 +66,3 @@ inline double GetSecondsBetweenTicks( uint64_t start, uint64_t end )
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_Ticks_h

@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_JSONValue_h
-#define _FTL_JSONValue_h
+#pragma once
 
 #include <FTL/CStrRef.h>
 #include <FTL/JSONDec.h>
@@ -710,5 +709,3 @@ inline JSONObject const *JSONArray::getObject( size_t index ) const
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_JSONValue_h

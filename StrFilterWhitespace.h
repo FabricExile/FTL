@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_StrFilterWhitespace_h
-#define _FTL_StrFilterWhitespace_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/MatchCharWhitespace.h>
@@ -22,5 +21,3 @@ inline std::string StrFilterWhitespace( std::string const &str )
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_StrFilterWhitespace_h

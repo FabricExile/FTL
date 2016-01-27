@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_JSONDec_h
-#define _FTL_JSONDec_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/JSONException.h>
@@ -1180,5 +1179,3 @@ private:
 };
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_JSONDec_h

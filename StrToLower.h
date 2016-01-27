@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_StrToLower_h
-#define _FTL_StrToLower_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/MapCharToLower.h>
@@ -17,5 +16,3 @@ inline void StrToLower( std::string &str )
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_StrToLower_h

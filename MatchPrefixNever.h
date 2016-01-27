@@ -2,8 +2,7 @@
  *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_MatchPrefixNever_h
-#define _FTL_MatchPrefixNever_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/StrRef.h>
@@ -20,5 +19,3 @@ struct MatchPrefixNever
 };
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_MatchPrefixNever_h
