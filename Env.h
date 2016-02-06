@@ -1,9 +1,8 @@
 /*
- *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+ *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_Env_h
-#define _FTL_Env_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/MatchCharSingle.h>
@@ -37,5 +36,3 @@ inline bool EnvGetList(
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_Env_h

@@ -1,9 +1,8 @@
 /*
- *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+ *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_JSONValue_h
-#define _FTL_JSONValue_h
+#pragma once
 
 #include <FTL/CStrRef.h>
 #include <FTL/JSONDec.h>
@@ -299,6 +298,8 @@ inline FTL::CStrRef JSONValue::getStringValue() const
   return cast<FTL::JSONString>()->getValue();
 }
 
+class JSONObject;
+
 class JSONArray : public JSONValue
 {
   typedef std::vector<JSONValue *> Vec;
@@ -329,6 +330,44 @@ public:
       return m_vec[index];
     else
       throw JSONInvalidIndexException( index );
+  }
+  
+  bool getBoolean( size_t index ) const
+  {
+    JSONValue const *jsonValue = get( index );
+    bool result = jsonValue->cast<JSONBoolean>()->getValue();
+    return result;
+  }
+  
+  int32_t getSInt32( size_t index ) const
+  {
+    JSONValue const *jsonValue = get( index );
+    int32_t result = jsonValue->cast<JSONSInt32>()->getValue();
+    return result;
+  }
+  
+  double getFloat64( size_t index ) const
+  {
+    JSONValue const *jsonValue = get( index );
+    if ( JSONSInt32 const *jsonSInt32 = jsonValue->maybeCast<JSONSInt32>() )
+      return (double)jsonSInt32->getValue();
+    double result = jsonValue->cast<JSONFloat64>()->getValue();
+    return result;
+  }
+ 
+  CStrRef getString( size_t index ) const
+  {
+    JSONValue const *jsonValue = get( index );
+    CStrRef result = jsonValue->cast<JSONString>()->getValue();
+    return result;
+  }
+ 
+  JSONObject const *getObject( size_t index ) const;
+  
+  JSONArray const *getArray( size_t index ) const
+  {
+    JSONValue const *jsonValue = get( index );
+    return jsonValue->cast<JSONArray>();
   }
 
   JSONValue const *operator[]( size_t index ) const
@@ -663,6 +702,10 @@ inline JSONValue *JSONValue::Decode( JSONStrWithLoc &ds )
   return result.take();
 }
 
-FTL_NAMESPACE_END
+inline JSONObject const *JSONArray::getObject( size_t index ) const
+{
+  JSONValue const *jsonValue = get( index );
+  return jsonValue->cast<JSONObject>();
+}
 
-#endif //_FTL_JSONValue_h
+FTL_NAMESPACE_END

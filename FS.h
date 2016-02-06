@@ -1,9 +1,8 @@
 /*
- *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+ *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_FS_h
-#define _FTL_FS_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <FTL/Path.h>
@@ -303,5 +302,3 @@ inline bool FSMaybeMoveFile(
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_FS_h

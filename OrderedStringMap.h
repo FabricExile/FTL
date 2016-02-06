@@ -1,9 +1,8 @@
 /*
- *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+ *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_OrderedStringMap_h
-#define _FTL_OrderedStringMap_h
+#pragma once
 
 #include <FTL/CStrRef.h>
 #include <map>
@@ -104,5 +103,3 @@ private:
 };
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_OrderedStringMap_h

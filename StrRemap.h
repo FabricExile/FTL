@@ -1,9 +1,8 @@
 /*
- *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+ *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_StrRemap_h
-#define _FTL_StrRemap_h
+#pragma once
 
 #include <FTL/Config.h>
 
@@ -23,5 +22,3 @@ void StrRemap( std::string &str )
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_StrRemap_h

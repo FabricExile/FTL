@@ -1,9 +1,8 @@
 /*
- *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+ *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_Config_h
-#define _FTL_Config_h
+#pragma once
 
 #if defined( __linux__ )
 
@@ -80,5 +79,3 @@ inline float roundf( float x ) { return floorf(x+0.5f); }
 
 #define FTL_NAMESPACE_BEGIN namespace FTL_NAMESPACE {
 #define FTL_NAMESPACE_END   }
-
-#endif // _FTL_Config_h

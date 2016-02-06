@@ -1,9 +1,8 @@
 /*
- *  Copyright 2010-2015 Fabric Software Inc. All rights reserved.
+ *  Copyright (c) 2010-2016, Fabric Software Inc. All rights reserved.
  */
 
-#ifndef _FTL_StrFilter_h
-#define _FTL_StrFilter_h
+#pragma once
 
 #include <FTL/Config.h>
 #include <string>
@@ -34,5 +33,3 @@ std::string StrFilter( std::string const &str )
 }
 
 FTL_NAMESPACE_END
-
-#endif //_FTL_StrFilter_h
