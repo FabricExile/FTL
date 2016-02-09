@@ -586,9 +586,20 @@ public:
     JSONValue const *jsonValue = maybeGet( key );
     if ( jsonValue )
     {
-      JSONString const *jsonString = jsonValue->maybeCast<JSONString>();
-      if(jsonString)
+      if ( JSONString const *jsonString = jsonValue->maybeCast<JSONString>() )
         result = jsonString->getValue();
+    }
+    return result;
+  }
+
+  int32_t getSInt32Or( StrRef key, int32_t defaultValue ) const
+  {
+    int32_t result = defaultValue;
+    JSONValue const *jsonValue = maybeGet( key );
+    if ( jsonValue )
+    {
+      if ( JSONSInt32 const *jsonSInt32 = jsonValue->maybeCast<JSONSInt32>() )
+        result = jsonSInt32->getValue();
     }
     return result;
   }
