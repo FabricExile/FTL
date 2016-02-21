@@ -405,6 +405,20 @@ public:
   void push_back( JSONValue *jsonValue )
     { m_vec.push_back( jsonValue ); }
 
+  void extend_take( FTL::OwnedPtr<FTL::JSONArray> &that )
+  {
+    Vec thatVec;
+    thatVec.swap( that->m_vec );
+
+    m_vec.reserve( m_vec.size() + thatVec.size() );
+    for ( Vec::const_iterator it = thatVec.begin();
+      it != thatVec.end(); ++it )
+    {
+      FTL::JSONValue *thatValue = *it;
+      m_vec.push_back( thatValue );
+    }
+  }
+
 protected:
 
   virtual void encodeTo( JSONEnc<std::string> &enc ) const
@@ -586,9 +600,20 @@ public:
     JSONValue const *jsonValue = maybeGet( key );
     if ( jsonValue )
     {
-      JSONString const *jsonString = jsonValue->maybeCast<JSONString>();
-      if(jsonString)
+      if ( JSONString const *jsonString = jsonValue->maybeCast<JSONString>() )
         result = jsonString->getValue();
+    }
+    return result;
+  }
+
+  int32_t getSInt32Or( StrRef key, int32_t defaultValue ) const
+  {
+    int32_t result = defaultValue;
+    JSONValue const *jsonValue = maybeGet( key );
+    if ( jsonValue )
+    {
+      if ( JSONSInt32 const *jsonSInt32 = jsonValue->maybeCast<JSONSInt32>() )
+        result = jsonSInt32->getValue();
     }
     return result;
   }
