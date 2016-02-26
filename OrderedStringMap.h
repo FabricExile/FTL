@@ -43,7 +43,7 @@ public:
   bool empty() const
     { return m_vec.empty(); }
 
-  bool size() const
+  size_t size() const
     { return m_vec.size(); }
 
   bool has( StrRef key ) const
