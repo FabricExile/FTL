@@ -11,15 +11,15 @@ FTL_NAMESPACE_BEGIN
 
 template<
   typename MatchPrefix0,
-  typename MatchPrefix1 = MatchPrefixNever,
-  typename MatchPrefix2 = MatchPrefixNever,
-  typename MatchPrefix3 = MatchPrefixNever,
-  typename MatchPrefix4 = MatchPrefixNever,
-  typename MatchPrefix5 = MatchPrefixNever,
-  typename MatchPrefix6 = MatchPrefixNever,
-  typename MatchPrefix7 = MatchPrefixNever,
-  typename MatchPrefix8 = MatchPrefixNever,
-  typename MatchPrefix9 = MatchPrefixNever
+  typename MatchPrefix1 = MatchPrefixEmpty,
+  typename MatchPrefix2 = MatchPrefixEmpty,
+  typename MatchPrefix3 = MatchPrefixEmpty,
+  typename MatchPrefix4 = MatchPrefixEmpty,
+  typename MatchPrefix5 = MatchPrefixEmpty,
+  typename MatchPrefix6 = MatchPrefixEmpty,
+  typename MatchPrefix7 = MatchPrefixEmpty,
+  typename MatchPrefix8 = MatchPrefixEmpty,
+  typename MatchPrefix9 = MatchPrefixEmpty
   >
 struct MatchPrefixSeq
 {
