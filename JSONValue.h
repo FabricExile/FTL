@@ -10,6 +10,8 @@
 #include <FTL/OrderedStringMap.h>
 #include <FTL/OwnedPtr.h>
 
+#include <assert.h>
+
 FTL_NAMESPACE_BEGIN
 
 class JSONValue
@@ -59,7 +61,17 @@ public:
   template<typename JSONValueTy>
   JSONValueTy *maybeCast()
   {
+    assert( !!this );
     if ( JSONValueTy::classof( this ) )
+      return static_cast<JSONValueTy *>( this );
+    else
+      return 0;
+  }
+
+  template<typename JSONValueTy>
+  JSONValueTy *maybeCastOrNull()
+  {
+    if ( this && JSONValueTy::classof( this ) )
       return static_cast<JSONValueTy *>( this );
     else
       return 0;
@@ -75,9 +87,33 @@ public:
   }
 
   template<typename JSONValueTy>
+  JSONValueTy *castOrNull()
+  {
+    JSONValueTy *result;
+    if ( !!this )
+    {
+      result = maybeCast<JSONValueTy>();
+      if ( !result )
+        throw JSONInvalidCastException( JSONValueTy::NotAStr() );
+    }
+    else result = 0;
+    return result;
+  }
+
+  template<typename JSONValueTy>
   JSONValueTy const *maybeCast() const
   {
+    assert( !!this );
     if ( JSONValueTy::classof( this ) )
+      return static_cast<JSONValueTy const *>( this );
+    else
+      return 0;
+  }
+
+  template<typename JSONValueTy>
+  JSONValueTy const *maybeCastOrNull() const
+  {
+    if ( this && JSONValueTy::classof( this ) )
       return static_cast<JSONValueTy const *>( this );
     else
       return 0;
@@ -89,6 +125,20 @@ public:
     JSONValueTy const *result = maybeCast<JSONValueTy>();
     if ( !result )
       throw JSONInvalidCastException( JSONValueTy::NotAStr() );
+    return result;
+  }
+
+  template<typename JSONValueTy>
+  JSONValueTy const *castOrNull() const
+  {
+    JSONValueTy const *result;
+    if ( !!this )
+    {
+      result = maybeCast<JSONValueTy>();
+      if ( !result )
+        throw JSONInvalidCastException( JSONValueTy::NotAStr() );
+    }
+    else result = 0;
     return result;
   }
 
