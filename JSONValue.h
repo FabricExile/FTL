@@ -603,30 +603,22 @@ public:
   
   JSONObject const * getObject( StrRef key ) const
   {
-    JSONValue const *jsonValue = get( key );
-    return jsonValue->cast<JSONObject>();
+    return get( key )->cast<JSONObject>();
   }
 
   JSONObject const * maybeGetObject( StrRef key ) const
   {
-    JSONValue const *jsonValue = maybeGet( key );
-    if( jsonValue )
-      return jsonValue->maybeCast<JSONObject>();
-    return NULL;
+    return maybeGet( key )->maybeCastOrNull<JSONObject>();
   }
   
   JSONArray const * getArray( StrRef key ) const
   {
-    JSONValue const *jsonValue = get( key );
-    return jsonValue->cast<JSONArray>();
+    return get( key )->cast<JSONArray>();
   }
 
   JSONArray const * maybeGetArray( StrRef key ) const
   {
-    JSONValue const *jsonValue = maybeGet( key );
-    if( jsonValue )
-      return jsonValue->maybeCast<JSONArray>();
-    return NULL;
+    return maybeGet( key )->maybeCastOrNull<JSONArray>();
   }
   
   bool maybeGetString( StrRef key, CStrRef &value ) const
