@@ -636,14 +636,14 @@ public:
     return result;
   }
 
-  CStrRef getStringOrEmpty( StrRef key ) const
+  bool getBooleanOr( StrRef key, bool defaultValue ) const
   {
-    CStrRef result;
+    bool result = defaultValue;
     JSONValue const *jsonValue = maybeGet( key );
     if ( jsonValue )
     {
-      if ( JSONString const *jsonString = jsonValue->maybeCast<JSONString>() )
-        result = jsonString->getValue();
+      if ( JSONBoolean const *jsonBoolean = jsonValue->maybeCast<JSONBoolean>() )
+        result = jsonBoolean->getValue();
     }
     return result;
   }
@@ -656,6 +656,18 @@ public:
     {
       if ( JSONSInt32 const *jsonSInt32 = jsonValue->maybeCast<JSONSInt32>() )
         result = jsonSInt32->getValue();
+    }
+    return result;
+  }
+
+  CStrRef getStringOrEmpty( StrRef key ) const
+  {
+    CStrRef result;
+    JSONValue const *jsonValue = maybeGet( key );
+    if ( jsonValue )
+    {
+      if ( JSONString const *jsonString = jsonValue->maybeCast<JSONString>() )
+        result = jsonString->getValue();
     }
     return result;
   }
