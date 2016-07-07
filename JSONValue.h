@@ -543,10 +543,24 @@ public:
     return m_map.insert( key, value );
   }
 
+  JSONValue *maybeGet( StrRef key )
+  {
+    Map::const_iterator it = find( key );
+    return it != end()? it->second: 0;
+  }
+
   JSONValue const *maybeGet( StrRef key ) const
   {
     Map::const_iterator it = find( key );
     return it != end()? it->second: 0;
+  }
+
+  JSONValue *get( StrRef key )
+  {
+    JSONValue *result = maybeGet( key );
+    if ( !result )
+      throw JSONKeyNotFoundException( key );
+    return result;
   }
 
   JSONValue const *get( StrRef key ) const
