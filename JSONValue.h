@@ -594,6 +594,16 @@ public:
     return result;
   }
   
+  int32_t getSInt32OrDefault( StrRef key, int32_t defaultValue ) const
+  {
+    JSONValue const *jsonValue = maybeGet( key );
+    if( !jsonValue )
+      return defaultValue;
+    if ( JSONSInt32 const *jsonSInt32 = jsonValue->maybeCast<JSONSInt32>() )
+      return jsonSInt32->getValue();
+    return defaultValue;
+  }
+  
   double getFloat64( StrRef key ) const
   {
     JSONValue const *jsonValue = get( key );
