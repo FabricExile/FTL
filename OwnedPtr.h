@@ -29,9 +29,9 @@ class OwnedPtr
     delete m_ptr;
   }      
 
-  OwnedPtr( OwnedPtr<Ty> const & );
+  OwnedPtr( OwnedPtr<Ty> const & ) FTL_DELETED_FUNCTION;
 
-  OwnedPtr &operator =( OwnedPtr<Ty> const & );
+  OwnedPtr &operator =( OwnedPtr<Ty> const & ) FTL_DELETED_FUNCTION;
 
 public:
 
@@ -44,6 +44,11 @@ public:
   template<typename OtherTy>
   OwnedPtr( OtherTy *ptr )
     { init( ptr ); }
+
+#if FTL_HAS_RVALUE_REFERENCES
+  OwnedPtr( OwnedPtr<Ty> &&that )
+    { steal( that.m_ptr ); }
+#endif
 
   void reset( Ty *ptr )
   {
@@ -59,6 +64,15 @@ public:
     reset( ptr );
     return *this;
   }
+
+#if FTL_HAS_RVALUE_REFERENCES
+  OwnedPtr &operator=( OwnedPtr<Ty> &&that )
+  {
+    cleanup();
+    steal( that.m_ptr );
+    return *this;
+  }
+#endif
 
   template<typename OtherTy>
   void reset( OtherTy *ptr )

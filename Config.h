@@ -73,6 +73,28 @@ inline float roundf( float x ) { return floorf(x+0.5f); }
 # define FTL_NOEXCEPT
 #endif
 
+#ifndef __has_feature
+# define __has_feature(x) 0
+#endif
+
+// From LLVM 3.3 source
+#if (__has_feature(cxx_rvalue_references)   \
+     || defined(__GXX_EXPERIMENTAL_CXX0X__) \
+     || (defined(_MSC_VER) && _MSC_VER >= 1600))
+# define FTL_HAS_RVALUE_REFERENCES 1
+#else
+# define FTL_HAS_RVALUE_REFERENCES 0
+#endif
+
+// From LLVM 3.3 source
+#if (__has_feature(cxx_deleted_functions) \
+     || defined(__GXX_EXPERIMENTAL_CXX0X__))
+     // No version of MSVC currently supports this.
+# define FTL_DELETED_FUNCTION = delete
+#else
+# define FTL_DELETED_FUNCTION
+#endif
+
 #if !defined(FTL_NAMESPACE)
 # define FTL_NAMESPACE FTL
 #endif
