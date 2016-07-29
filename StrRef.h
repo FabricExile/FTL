@@ -271,6 +271,10 @@ public:
     { return _size >= that._size
       && memcmp( _data, that._data, that._size ) == 0; }
 
+  bool endswith( StrRef that ) const
+    { return _size >= that._size
+      && memcmp( _data + _size - that._size, that._data, that._size ) == 0; }
+
   struct Equals
   {
     bool operator ()( StrRef lhs, StrRef rhs ) const
