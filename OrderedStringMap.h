@@ -7,7 +7,7 @@
 #include <FTL/CStrRef.h>
 #include <map>
 #include <string>
-#if defined(FTL_PLATFORM_WINDOWS) || __cplusplus == 201103L
+#if defined(FTL_PLATFORM_WINDOWS)
 # include <unordered_map>
 #else
 # include <tr1/unordered_map>
@@ -24,7 +24,7 @@ class OrderedStringMap
 
   typedef std::pair<CStrRef, ValueTy> KV;
   typedef std::vector<KV> Vec;
-#if defined(FTL_PLATFORM_WINDOWS) || __cplusplus == 201103L
+#if defined(FTL_PLATFORM_WINDOWS)
   typedef std::unordered_map<
 #else
   typedef std::tr1::unordered_map<
