@@ -29,12 +29,15 @@ public:
     Type_Object
   };
 
-  static JSONValue *Create( JSONEnt const &je );
+  template<typename JSONStrTy>
+  static JSONValue *Create( JSONEnt<JSONStrTy> const &je );
 
-  static JSONValue *Decode( JSONStrWithLoc &ds );
+  template<typename JSONStrTy>
+  static JSONValue *Decode( JSONStrTy &ds );
+
   static JSONValue *Decode( FTL::StrRef str )
   {
-    JSONStrWithLoc ds( str );
+    JSONStr ds( str );
     return Decode( ds );
   }
 
@@ -715,36 +718,37 @@ private:
   Map m_map;
 };
 
-inline JSONValue *JSONValue::Create( JSONEnt const &je )
+template<typename JSONStrTy>
+JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
 {
   switch ( je.getType() )
   {
-    case JSONEnt::Type_Null:
+    case JSONEnt<JSONStrTy>::Type_Null:
       return new JSONNull();
 
-    case JSONEnt::Type_Boolean:
+    case JSONEnt<JSONStrTy>::Type_Boolean:
       return new JSONBoolean( je.booleanValue() );
 
-    case JSONEnt::Type_Int32:
+    case JSONEnt<JSONStrTy>::Type_Int32:
       return new JSONSInt32( je.int32Value() );
 
-    case JSONEnt::Type_Float64:
+    case JSONEnt<JSONStrTy>::Type_Float64:
       return new JSONFloat64( je.float64Value() );
 
-    case JSONEnt::Type_String:
+    case JSONEnt<JSONStrTy>::Type_String:
     {
       std::string string;
       je.stringAppendTo( string ); 
       return JSONString::CreateWithSwap( string );
     }
 
-    case JSONEnt::Type_Object:
+    case JSONEnt<JSONStrTy>::Type_Object:
     {
       OwnedPtr<JSONObject> object( new JSONObject() );
 
-      JSONStrWithLoc ds( je.getRawStr(), je.getLine(), je.getColumn() );
-      JSONObjectDec objectDec( ds );
-      JSONEnt keyJE, valueJE;
+      JSONStrTy ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONObjectDec<JSONStrTy> objectDec( ds );
+      JSONEnt<JSONStrTy> keyJE, valueJE;
       while ( objectDec.getNext( keyJE, valueJE ) )
       {
         if ( !keyJE.isString() )
@@ -775,14 +779,14 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
       return object.take();
     }
 
-    case JSONEnt::Type_Array:
+    case JSONEnt<JSONStrTy>::Type_Array:
     {
       OwnedPtr<JSONArray> array( new JSONArray() );
       array->reserve( je.arraySize() );
 
-      JSONStrWithLoc ds( je.getRawStr(), je.getLine(), je.getColumn() );
-      JSONArrayDec arrayDec( ds );
-      JSONEnt elementJE;
+      JSONStrTy ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONArrayDec<JSONStrTy> arrayDec( ds );
+      JSONEnt<JSONStrTy> elementJE;
       while ( arrayDec.getNext( elementJE ) )
         array->push_back( Create( elementJE ) );
 
@@ -795,10 +799,11 @@ inline JSONValue *JSONValue::Create( JSONEnt const &je )
   }
 }
 
-inline JSONValue *JSONValue::Decode( JSONStrWithLoc &ds )
+template<typename JSONStrTy>
+JSONValue *JSONValue::Decode( JSONStrTy &ds )
 {
-  JSONDec jd( ds );
-  JSONEnt je;
+  JSONDec<JSONStrTy> jd( ds );
+  JSONEnt<JSONStrTy> je;
   OwnedPtr<JSONValue> result;
   if ( jd.getNext( je ) )
     result = Create( je );
