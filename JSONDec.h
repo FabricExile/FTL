@@ -1104,8 +1104,6 @@ public:
 
   JSONObjectDec( JSONStrWithLoc &ds )
     : m_ds( ds )
-    , m_lastKeyShortData( 0 )
-    , m_lastKeyLength( 0 )
   {
     JSONEnt::SkipWhitespace( m_ds );
     if ( m_ds.empty() || m_ds.front() != '{' )
@@ -1121,9 +1119,6 @@ public:
 
     JSONEnt::ConsumeString( m_ds, &key );
 
-    m_lastKeyShortData = key.value.string.shortData;
-    m_lastKeyLength = key.value.string.length;
-
     JSONEnt::SkipWhitespace( m_ds );
     JSONEnt::ConsumeColon( m_ds );
     JSONEnt::SkipWhitespace( m_ds );
@@ -1136,8 +1131,6 @@ public:
 private:
 
   JSONStrWithLoc &m_ds;
-  char const *m_lastKeyShortData;
-  uint32_t m_lastKeyLength;
 };
 
 class JSONArrayDec
@@ -1146,8 +1139,6 @@ public:
 
   JSONArrayDec( JSONStrWithLoc &ds )
     : m_ds( ds )
-    , m_count( 0 )
-    , m_lastIndex( 0 )
   {
     JSONEnt::SkipWhitespace( m_ds );
     if ( m_ds.empty() || m_ds.front() != '[' )
@@ -1163,19 +1154,12 @@ public:
 
     JSONEnt::ConsumeEntity( m_ds, &element );
 
-    m_lastIndex = ++m_count;
-
     return true;
   }
-
-  uint32_t getLastIndex() const
-    { return m_lastIndex; }
 
 private:
 
   JSONStrWithLoc &m_ds;
-  uint32_t m_count;
-  uint32_t m_lastIndex;
 };
 
 FTL_NAMESPACE_END
