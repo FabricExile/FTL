@@ -114,7 +114,7 @@ void displayEnt(
     case FTL::JSONEnt::Type_Object:
     {
       std::cout << FTL_STR("OBJECT ") << ent.objectSize() << '\n';
-      FTL::JSONStrWithLoc ds( ent.getRawStr(), ent.getLine(), ent.getColumn() );
+      FTL::JSONStrWithLoc ds( ent.getRawJSONStr() );
       FTL::JSONObjectDec objectDec( ds );
       FTL::JSONEnt key, value;
       while ( objectDec.getNext( key, value ) )
@@ -127,7 +127,7 @@ void displayEnt(
     case FTL::JSONEnt::Type_Array:
     {
       std::cout << FTL_STR("ARRAY ") << ent.arraySize() << '\n';
-      FTL::JSONStrWithLoc ds( ent.getRawStr(), ent.getLine(), ent.getColumn() );
+      FTL::JSONStrWithLoc ds( ent.getRawJSONStr() );
       FTL::JSONArrayDec arrayDec( ds );
       FTL::JSONEnt element;
       while ( arrayDec.getNext( element ) )

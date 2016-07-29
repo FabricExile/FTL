@@ -18,75 +18,75 @@ static const uint32_t JSONDecShortStringMaxLength = 16;
 
 struct JSONStr
 {
-  StrRef str;
-
   JSONStr() {}
 
-  JSONStr( StrRef theStr, uint32_t line = 0, uint32_t column = 0 )
-    : str( theStr ) {}
+  JSONStr( StrRef str, uint32_t line = 0, uint32_t column = 0 )
+    : m_str( str ), m_off( 0 ) {}
 
   bool empty() const
-    { return str.empty(); }
+    { return m_off == m_str.size(); }
 
   size_t size() const
-    { return str.size(); }
+    { return m_str.size() - m_off; }
 
   char const *data() const
-    { return str.data(); }
+    { return m_str.data() + m_off; }
 
   char front() const
-    { return str.front(); }
+    { return m_str[m_off]; }
 
   char operator[]( size_t index ) const
-    { return str[index]; }
+    { return m_str[m_off + index]; }
 
   void drop( size_t count = 1 )
-    { str = str.drop_front( count ); }
+    { m_off += count; }
 
   void drop_back( size_t count )
-    { str = str.drop_back( count ); }
+    { m_str = m_str.drop_back( count ); }
 
   uint32_t getLine() const
     { return 0; }
 
   uint32_t getColumn() const
     { return 0; }
+
+private:
+
+  StrRef m_str;
+  size_t m_off;
 };
 
 struct JSONStrWithLoc
 {
-  StrRef str;
-  uint32_t line, column;
-
   JSONStrWithLoc() {}
 
-  JSONStrWithLoc( StrRef theStr, uint32_t theLine = 1, uint32_t theColumn = 1 )
-    : str( theStr ), line( theLine ), column( theColumn ) {}
+  JSONStrWithLoc( StrRef str, uint32_t line = 1, uint32_t column = 1 )
+    : m_str( str ), m_off( 0 ), m_line( line ), m_column( column ) {}
 
   bool empty() const
-    { return str.empty(); }
+    { return m_off == m_str.size(); }
 
   size_t size() const
-    { return str.size(); }
+    { return m_str.size() - m_off; }
 
   char const *data() const
-    { return str.data(); }
+    { return m_str.data() + m_off; }
 
   char front() const
-    { return str.front(); }
+    { return m_str[m_off]; }
 
   char operator[]( size_t index ) const
-    { return str[index]; }
+    { return m_str[m_off + index]; }
 
   void drop( size_t count = 1 )
   {
     while ( count > 0 )
     {
-      switch ( str.front() )
+      switch ( m_str[m_off] )
       {
         case '\n':
-          ++line;
-          column = 1;
+          ++m_line;
+          m_column = 1;
           break;
 
         case '\r':
@@ -94,26 +94,32 @@ struct JSONStrWithLoc
 
         default:
         {
-          uint8_t top = uint8_t(str.front()) & 0xC0;
+          uint8_t top = uint8_t(m_str[m_off]) & 0xC0;
           // utf-8
           if ( top != 0x80 )
-            ++column;
+            ++m_column;
         }
         break;
       }
-      str = str.drop_front();
+      ++m_off;
       --count;
     }
   }
 
   void drop_back( size_t count )
-    { str = str.drop_back( count ); }
+    { m_str = m_str.drop_back( count ); }
 
   uint32_t getLine() const
-    { return line; }
+    { return m_line; }
 
   uint32_t getColumn() const
-    { return column; }
+    { return m_column; }
+
+private:
+
+  StrRef m_str;
+  size_t m_off;
+  uint32_t m_line, m_column;
 };
 
 template<typename JSONStrTy>
@@ -152,18 +158,18 @@ public:
   Type getType() const
     { return type; }
 
-  StrRef getRawStr() const
-    { return rawStrWithLoc.str; }
+  JSONStrTy getRawJSONStr() const
+    { return rawJSONStr; }
 
   uint32_t getLine() const
-    { return rawStrWithLoc.getLine(); }
+    { return rawJSONStr.getLine(); }
 
   uint32_t getColumn() const
-    { return rawStrWithLoc.getColumn(); }
+    { return rawJSONStr.getColumn(); }
 
   void copyFrom( JSONEnt const &that )
   {
-    rawStrWithLoc = that.rawStrWithLoc;
+    rawJSONStr = that.rawJSONStr;
     switch ( (type = that.type) )
     {
     case Type_Boolean:
@@ -369,7 +375,7 @@ protected:
 private:
 
   Type type;
-  JSONStrTy rawStrWithLoc;
+  JSONStrTy rawJSONStr;
   union
   {
     bool boolean;
@@ -396,78 +402,77 @@ void JSONEnt<JSONStrTy>::stringGetData_Long( char *data ) const
 {
   assert( isString() );
 
-  StrRef str = rawStrWithLoc.str;
+  JSONStrTy jsonStr( rawJSONStr );
 
-  assert( !str.empty() );
-  char quoteChar = str.front();
+  assert( !jsonStr.empty() );
+  char quoteChar = jsonStr.front();
   assert( quoteChar == '"' || quoteChar == '\'' );
-  str = str.drop_front();
+  jsonStr.drop();
 
   bool done = false;
   while ( !done )
   {
-    assert( !str.empty() );
+    assert( !jsonStr.empty() );
 
-    if ( str.front()  == quoteChar )
+    if ( jsonStr.front()  == quoteChar )
       done = true;
-    else if ( str.front() == '\\' )
+    else if ( jsonStr.front() == '\\' )
     {
-      str = str.drop_front();
-      assert( !str.empty() );
-      switch ( str.front() )
+      jsonStr.drop();
+      assert( !jsonStr.empty() );
+      switch ( jsonStr.front() )
       {
         case '"':
         case '\'':
         case '/':
         case '\\':
-          *data++ = str.front();
-          str = str.drop_front();
+          *data++ = jsonStr.front();
+          jsonStr.drop();
           break;
 
         case 'b':
           *data++ = '\b';
-          str = str.drop_front();
+          jsonStr.drop();
           break;
         case 'f':
           *data++ = '\f';
-          str = str.drop_front();
+          jsonStr.drop();
           break;
         case 'n':
           *data++ = '\n';
-          str = str.drop_front();
+          jsonStr.drop();
           break;
         case 'r':
           *data++ = '\r';
-          str = str.drop_front();
+          jsonStr.drop();
           break;
         case 't':
           *data++ = '\t';
-          str = str.drop_front();
+          jsonStr.drop();
           break;
 
         case 'u':
         {
-          str = str.drop_front();
-          JSONStrTy ds( str );
-          data += UCS2ToUTF8( ConsumeUCS2( ds ), data );
+          jsonStr.drop();
+          data += UCS2ToUTF8( ConsumeUCS2( jsonStr ), data );
         }
         break;
 
         default:
           assert( false );
-          str = str.drop_front();
+          jsonStr.drop();
           break;
       }
     }
     else
     {
-      *data++ = str.front();
-      str = str.drop_front();
+      *data++ = jsonStr.front();
+      jsonStr.drop();
     }
   }
 
-  assert( str.size() == 1 );
-  assert( str.front() == quoteChar );
+  assert( jsonStr.size() == 1 );
+  assert( jsonStr.front() == quoteChar );
 }
 
 template<typename JSONStrTy>
@@ -475,72 +480,72 @@ bool JSONEnt<JSONStrTy>::stringIs_Long( StrRef thatStr ) const
 {
   assert( isString() );
 
-  StrRef str = rawStrWithLoc.str;
+  JSONStrTy jsonStr( rawJSONStr );
 
-  assert( !str.empty() );
-  char quoteChar = str.front();
+  assert( !jsonStr.empty() );
+  char quoteChar = jsonStr.front();
   assert( quoteChar == '"' || quoteChar == '\'' );
-  str = str.drop_front();
+  jsonStr.drop();
 
   while ( !thatStr.empty() )
   {
-    assert( !str.empty() );
-    if ( str.front() == quoteChar )
+    assert( !jsonStr.empty() );
+    if ( jsonStr.front() == quoteChar )
     {
       assert( false );
       return false;
     }
-    else if ( str.front() == '\\' )
+    else if ( jsonStr.front() == '\\' )
     {
-      str = str.drop_front();
-      assert( !str.empty() );
-      switch ( str.front() )
+      jsonStr.drop();
+      assert( !jsonStr.empty() );
+      switch ( jsonStr.front() )
       {
       case '"':
       case '\'':
       case '/':
       case '\\':
-        if ( thatStr.front() != str.front() )
+        if ( thatStr.front() != jsonStr.front() )
           return false;
-        str = str.drop_front();
+        jsonStr.drop();
         thatStr = thatStr.drop_front();
         break;
 
       case 'b':
         if ( thatStr.front() != '\b' )
           return false;
-        str = str.drop_front();
+        jsonStr.drop();
         thatStr = thatStr.drop_front();
         break;
       case 'f':
         if ( thatStr.front() != '\f' )
           return false;
-        str = str.drop_front();
+        jsonStr.drop();
         thatStr = thatStr.drop_front();
         break;
       case 'n':
         if ( thatStr.front() != '\n' )
           return false;
-        str = str.drop_front();
+        jsonStr.drop();
         thatStr = thatStr.drop_front();
         break;
       case 'r':
         if ( thatStr.front() != '\r' )
           return false;
-        str = str.drop_front();
+        jsonStr.drop();
         thatStr = thatStr.drop_front();
         break;
       case 't':
         if ( thatStr.front() != '\t' )
           return false;
-        str = str.drop_front();
+        jsonStr.drop();
         thatStr = thatStr.drop_front();
         break;
 
       case 'u':
       {
-        str = str.drop_front();
-        JSONStrTy ds( str );
+        jsonStr.drop();
+        JSONStrTy ds( jsonStr );
 
         char utf8[3];
         uint32_t utf8Length = UCS2ToUTF8( ConsumeUCS2( ds ), utf8 );
@@ -558,16 +563,16 @@ bool JSONEnt<JSONStrTy>::stringIs_Long( StrRef thatStr ) const
     }
     else
     {
-      if ( str.front() != thatStr.front() )
+      if ( jsonStr.front() != thatStr.front() )
         return false;
-      str = str.drop_front();
+      jsonStr.drop();
       thatStr = thatStr.drop_front();
     }
   }
 
-  if ( str.size() == 1 )
+  if ( jsonStr.size() == 1 )
   {
-    assert( str.front() == quoteChar );
+    assert( jsonStr.front() == quoteChar );
     return true;
   }
   else return false;
@@ -689,7 +694,7 @@ void JSONEnt<JSONStrTy>::ConsumeString(
   if ( ent )
   {
     ent->type = JSONEnt::Type_String;
-    ent->rawStrWithLoc = ds;
+    ent->rawJSONStr = ds;
     ent->value.string.length = 0;
   }
 
@@ -768,7 +773,7 @@ void JSONEnt<JSONStrTy>::ConsumeString(
   }
 
   if ( ent )
-    ent->rawStrWithLoc.drop_back( ds.size() );
+    ent->rawJSONStr.drop_back( ds.size() );
 }
 
 template<typename JSONStrTy>
@@ -794,8 +799,8 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       if ( ent )
       {
         ent->type = JSONEnt::Type_Null;
-        ent->rawStrWithLoc = ds;
-        ent->rawStrWithLoc.drop_back( ds.size() - 4 );
+        ent->rawJSONStr = ds;
+        ent->rawJSONStr.drop_back( ds.size() - 4 );
       }
 
       ds.drop( 4 );
@@ -814,8 +819,8 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       if ( ent )
       {
         ent->type = JSONEnt::Type_Boolean;
-        ent->rawStrWithLoc = ds;
-        ent->rawStrWithLoc.drop_back( ds.size() - 4 );
+        ent->rawJSONStr = ds;
+        ent->rawJSONStr.drop_back( ds.size() - 4 );
         ent->value.boolean = true;
       }
 
@@ -836,8 +841,8 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       if ( ent )
       {
         ent->type = JSONEnt::Type_Boolean;
-        ent->rawStrWithLoc = ds;
-        ent->rawStrWithLoc.drop_back( ds.size() - 5 );
+        ent->rawJSONStr = ds;
+        ent->rawJSONStr.drop_back( ds.size() - 5 );
         ent->value.boolean = false;
       }
 
@@ -858,7 +863,7 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
     case '9':
     {
       if ( ent )
-        ent->rawStrWithLoc = ds;
+        ent->rawJSONStr = ds;
 
       if ( !ds.empty() && ds.front() == '-' )
       {
@@ -899,12 +904,12 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
           ent->type = JSONEnt::Type_Int32;
 
           static const uint32_t maxIntegerLength = 15;
-          uint32_t length = ent->rawStrWithLoc.size() - ds.size();
+          uint32_t length = ent->rawJSONStr.size() - ds.size();
           if ( length > maxIntegerLength )
             throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("integer too long") );
 
           char buf[maxIntegerLength+1];
-          memcpy( buf, ent->rawStrWithLoc.data(), length );
+          memcpy( buf, ent->rawJSONStr.data(), length );
           buf[length] = '\0';
           ent->value.int32 = atoi( buf );
         }
@@ -949,12 +954,12 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
         if ( ent )
         {
           static const uint32_t maxScalarLength = 31;
-          uint32_t length = ent->rawStrWithLoc.size() - ds.size();
+          uint32_t length = ent->rawJSONStr.size() - ds.size();
           if ( length > maxScalarLength )
             throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("floating point too long") );
 
           char buf[maxScalarLength+1];
-          memcpy( buf, ent->rawStrWithLoc.data(), length );
+          memcpy( buf, ent->rawJSONStr.data(), length );
           buf[length] = '\0';
 
           char const *oldlocale = setlocale( LC_NUMERIC, "C" );
@@ -965,7 +970,7 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       }
       
       if ( ent )
-        ent->rawStrWithLoc.drop_back( ds.size() );
+        ent->rawJSONStr.drop_back( ds.size() );
     }
     break;
 
@@ -979,7 +984,7 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       if ( ent )
       {
         ent->type = JSONEnt::Type_Object;
-        ent->rawStrWithLoc = ds;
+        ent->rawJSONStr = ds;
         ent->value.object.size = 0;
       }
 
@@ -1018,7 +1023,7 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       }
       
       if ( ent )
-        ent->rawStrWithLoc.drop_back( ds.size() );
+        ent->rawJSONStr.drop_back( ds.size() );
     }
     break;
 
@@ -1027,7 +1032,7 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       if ( ent )
       {
         ent->type = JSONEnt::Type_Array;
-        ent->rawStrWithLoc = ds;
+        ent->rawJSONStr = ds;
         ent->value.array.size = 0;
       }
 
@@ -1060,7 +1065,7 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       }
       
       if ( ent )
-        ent->rawStrWithLoc.drop_back( ds.size() );
+        ent->rawJSONStr.drop_back( ds.size() );
     }
     break;
 

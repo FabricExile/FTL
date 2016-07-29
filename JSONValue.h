@@ -746,7 +746,7 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
     {
       OwnedPtr<JSONObject> object( new JSONObject() );
 
-      JSONStrTy ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONStrTy ds( je.getRawJSONStr() );
       JSONObjectDec<JSONStrTy> objectDec( ds );
       JSONEnt<JSONStrTy> keyJE, valueJE;
       while ( objectDec.getNext( keyJE, valueJE ) )
@@ -784,7 +784,7 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
       OwnedPtr<JSONArray> array( new JSONArray() );
       array->reserve( je.arraySize() );
 
-      JSONStrTy ds( je.getRawStr(), je.getLine(), je.getColumn() );
+      JSONStrTy ds( je.getRawJSONStr() );
       JSONArrayDec<JSONStrTy> arrayDec( ds );
       JSONEnt<JSONStrTy> elementJE;
       while ( arrayDec.getNext( elementJE ) )
