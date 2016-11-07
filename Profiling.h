@@ -7,6 +7,7 @@
 #include <FTL/Ticks.h>
 #include <vector>
 #include <map>
+#include <assert.h>
 
 FTL_NAMESPACE_BEGIN
 
@@ -114,11 +115,12 @@ public:
   bool endProfilingEvent(int index)
   {
     uint64_t endTick = GetCurrentTicks();
-    if( index < 0 )
-      return false;
-    if( index >= m_numProfiles )
+
+    assert( index >= 0 && index < m_numProfiles );
+    if( index < 0 || index >= m_numProfiles )
       return false;
 
+    assert( m_stackEnd > 0 );
     if( m_stackEnd == 0 )
       return false;
 
@@ -128,12 +130,12 @@ public:
     return true;
   }
 
-  bool stopProfilingEvent(int index)
+  bool pauseProfilingEvent(int index)
   {
     uint64_t endTick = GetCurrentTicks();
-    if( index < 0 )
-      return false;
-    if( index >= m_numProfiles )
+
+    assert( index >= 0 && index < m_numProfiles );
+    if( index < 0 || index >= m_numProfiles )
       return false;
 
     m_profilingInfos[index].m_elapsed += GetSecondsBetweenTicks(m_profilingInfos[index].m_begin, endTick);
@@ -144,10 +146,11 @@ public:
   bool resumeProfilingEvent(int index)
   {
     uint64_t beginTick = GetCurrentTicks();
-    if( index < 0 )
+
+    assert( index >= 0 && index < m_numProfiles );
+    if( index < 0 || index >= m_numProfiles )
       return false;
-    if( index >= m_numProfiles )
-      return false;
+
     m_profilingInfos[index].m_begin = m_profilingInfos[index].m_end = beginTick;
     return true;
   }
@@ -234,9 +237,9 @@ public:
     m_stack.endProfilingEvent(m_index);
   }
 
-  void stop()
+  void pause()
   {
-    m_stack.stopProfilingEvent(m_index);
+    m_stack.pauseProfilingEvent(m_index);
   }
 
   void resume()
@@ -247,6 +250,36 @@ public:
 private:
   int m_index;
   ProfilingStack & m_stack;
+};
+
+class AutoProfilingPauseEvent
+{
+public:
+
+  AutoProfilingPauseEvent(AutoProfilingEvent & event)
+    : m_event(event)
+    , m_resumed(false)
+  {
+    m_event.pause();
+  }
+
+  ~AutoProfilingPauseEvent()
+  {
+    resume();
+  }
+
+  void resume()
+  {
+    if(m_resumed)
+      return;
+    m_event.resume();
+    m_resumed = true;
+  }
+
+
+private:
+  AutoProfilingEvent & m_event;
+  bool m_resumed;
 };
 
 FTL_NAMESPACE_END
