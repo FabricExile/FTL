@@ -48,7 +48,7 @@ public:
 
   double getMS() const
   {
-    return m_elapsed + getSeconds() * 1000.0;
+    return getSeconds() * 1000.0;
   }
 
   char const *m_label;
