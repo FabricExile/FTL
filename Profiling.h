@@ -5,8 +5,9 @@
 #pragma once
 
 #include <FTL/Ticks.h>
+#include <FTL/OrderedStringMap.h>
 #include <vector>
-#include <map>
+#include <algorithm>
 #include <assert.h>
 
 FTL_NAMESPACE_BEGIN
@@ -18,8 +19,9 @@ public:
   ProfilingInfo(char const * label, int parentIndex)
     : m_label(label)
     , m_parentIndex(parentIndex)
-    , m_begin( GetCurrentTicks() )
-    , m_elapsed( 0.0 )
+    , m_begin(GetCurrentTicks())
+    , m_elapsed(0.0)
+    , m_paused(false)
   {
     m_end = m_begin;
   }
@@ -30,6 +32,7 @@ public:
     , m_begin(0)
     , m_end(0)
     , m_elapsed(0.0)
+    , m_paused(false)
   {
   }
 
@@ -39,6 +42,7 @@ public:
     , m_begin(other.m_begin)
     , m_end(other.m_end)
     , m_elapsed(other.m_elapsed)
+    , m_paused(other.m_paused)
   {
   }
 
@@ -57,19 +61,41 @@ public:
   uint64_t m_begin;
   uint64_t m_end;
   double m_elapsed;
+  bool m_paused;
 };
 
 struct ProfilingEntry
 {
   ProfilingEntry(char const * label)
   : m_label(label)
+  , m_index(0)
+  , m_parentIndex(-1)
   , m_level(0)
   , m_invocations(0)
   , m_seconds(0.0)
   {
   }
 
+  ProfilingEntry(const ProfilingEntry & other)
+  : m_label(other.m_label)
+  , m_callStack(other.m_callStack)
+  , m_index(other.m_index)
+  , m_parentIndex(other.m_parentIndex)
+  , m_level(other.m_level)
+  , m_invocations(other.m_invocations)
+  , m_seconds(other.m_seconds)
+  {
+  }
+
+  static bool compare(const ProfilingEntry & a, const ProfilingEntry & b)
+  {
+    return a.m_seconds > b.m_seconds;
+  }
+
   char const * m_label;
+  std::vector< FTL::CStrRef > m_callStack;
+  int m_index;
+  int m_parentIndex;
   unsigned int m_level;
   unsigned int m_invocations;
   double m_seconds;
@@ -79,13 +105,14 @@ class ProfilingStack
 {
 public:
 
-  ProfilingStack(bool enabled = true, unsigned int initialStackSize = 4096)
+  ProfilingStack(bool enabled = true, unsigned int initialStackSize = 4096 * 1024)
     : m_enabled(enabled)
     , m_numProfiles(0)
-    , m_stackEnd(0)
+    , m_stackLastIndex(-1)
   {
+    assert(initialStackSize > 0);
     m_profilingInfos.resize(m_enabled ? initialStackSize : 0);
-    m_parentKeyStack.resize(m_enabled ? initialStackSize : 0);
+    m_parentKeyStack.resize(m_enabled ? 512 : 0);
   }
 
   int beginProfilingEvent(char const * label)
@@ -94,22 +121,28 @@ public:
       return -1;
 
     int parentIndex = -1;
-    if( m_stackEnd > 0 )
+    if( m_stackLastIndex != -1 )
     {
-      parentIndex = m_parentKeyStack[m_stackEnd-1];
+      parentIndex = m_parentKeyStack[m_stackLastIndex];
+
+      // only use parent indices from timers which are running.
+      // this is done to avoid recursion.
+      if(m_profilingInfos[parentIndex].m_paused)
+      {
+        parentIndex = -1;
+      }
     }
 
     if(m_numProfiles == m_profilingInfos.size())
       m_profilingInfos.resize(m_profilingInfos.size() * 2);
-    if(m_stackEnd == m_parentKeyStack.size())
+    if(m_stackLastIndex == m_parentKeyStack.size() - 1)
       m_parentKeyStack.resize(m_parentKeyStack.size() * 2);
 
-    int index = m_numProfiles;
-    m_profilingInfos[index] = ProfilingInfo(label, parentIndex);
+    m_profilingInfos[m_numProfiles] = ProfilingInfo(label, parentIndex);
+    m_parentKeyStack[++m_stackLastIndex] = m_numProfiles;
     m_numProfiles++;
-    m_parentKeyStack[m_stackEnd++] = index;
 
-    return index;
+    return m_numProfiles-1;
   }
 
   bool endProfilingEvent(int index)
@@ -120,18 +153,21 @@ public:
     if( index < 0 || index >= m_numProfiles )
       return false;
 
-    assert( m_stackEnd > 0 );
-    if( m_stackEnd == 0 )
+    assert( m_stackLastIndex != -1 );
+    if( m_stackLastIndex == -1 )
       return false;
 
     m_profilingInfos[index].m_end = endTick;
-    m_stackEnd--;
+    m_stackLastIndex--;
 
     return true;
   }
 
   bool pauseProfilingEvent(int index)
   {
+    if(!m_enabled)
+      return false;
+
     uint64_t endTick = GetCurrentTicks();
 
     assert( index >= 0 && index < m_numProfiles );
@@ -140,11 +176,15 @@ public:
 
     m_profilingInfos[index].m_elapsed += GetSecondsBetweenTicks(m_profilingInfos[index].m_begin, endTick);
     m_profilingInfos[index].m_begin = m_profilingInfos[index].m_end = endTick;
+    m_profilingInfos[index].m_paused = true;
     return true;
   }
 
   bool resumeProfilingEvent(int index)
   {
+    if(!m_enabled)
+      return false;
+
     uint64_t beginTick = GetCurrentTicks();
 
     assert( index >= 0 && index < m_numProfiles );
@@ -152,39 +192,49 @@ public:
       return false;
 
     m_profilingInfos[index].m_begin = m_profilingInfos[index].m_end = beginTick;
+    m_profilingInfos[index].m_paused = false;
     return true;
   }
 
   std::vector< ProfilingEntry > getReportEntries() const
   {
     std::vector< ProfilingEntry > entries;
-    std::map< std::string, unsigned int > lookup;
+    OrderedStringMap< unsigned int > lookup;
 
     for(size_t i=0;i<m_numProfiles;i++)
     {
-      std::string key = m_profilingInfos[i].m_label;
-      int index = m_profilingInfos[i].m_parentIndex;
-      while(index >= 0)
+      std::vector< FTL::CStrRef > callstack;
+      callstack.push_back(m_profilingInfos[i].m_label);
+      int parentIndex = m_profilingInfos[i].m_parentIndex;
+      while(parentIndex >= 0)
       {
-        key += m_profilingInfos[index].m_label;
-        index = m_profilingInfos[index].m_parentIndex;
+        callstack.push_back(m_profilingInfos[parentIndex].m_label);
+        parentIndex = m_profilingInfos[parentIndex].m_parentIndex;
       }
+      std::reverse(callstack.begin(), callstack.end());
+      std::string callstackKey = getKeyForCallstack(callstack, callstack.size());
       
-      std::map< std::string, unsigned int >::const_iterator it = lookup.find(key.c_str());
+      OrderedStringMap< unsigned int >::const_iterator it = lookup.find(callstackKey.c_str());
       if(it == lookup.end())
       {
         ProfilingEntry entry(m_profilingInfos[i].m_label);
+        entry.m_index = (unsigned int)entries.size();
+        entry.m_parentIndex = -1;
+        entry.m_callStack = callstack;
         entry.m_invocations = 1;
-        entry.m_level = 0;
-        int index = m_profilingInfos[i].m_parentIndex;
-        while(index >= 0)
+        entry.m_level = callstack.size() - 1;
+
+        if(entry.m_level > 0)
         {
-          entry.m_level++;
-          index = m_profilingInfos[index].m_parentIndex;
+          std::string parentCallstackKey = getKeyForCallstack(callstack, callstack.size()-1);
+
+          OrderedStringMap< unsigned int >::const_iterator parentIt = lookup.find(parentCallstackKey.c_str());
+          assert(parentIt != lookup.end());
+          entry.m_parentIndex = parentIt->second;
         }
 
         entry.m_seconds = m_profilingInfos[i].getSeconds();
-        lookup.insert(std::pair< std::string, unsigned int >(key.c_str(), (unsigned int)entries.size()));
+        lookup.insert(callstackKey.c_str(), (unsigned int)entries.size());
         entries.push_back(entry);
       }
       else
@@ -194,7 +244,12 @@ public:
       }
     }
 
-    return entries;
+    std::sort(entries.begin(), entries.end(), ProfilingEntry::compare);
+
+    std::vector< ProfilingEntry > result;
+    traverseEntries(-1, entries, result);
+
+    return result;
   }
 
   std::string getReportString() const
@@ -215,11 +270,36 @@ public:
 
 private:
 
+  std::string getKeyForCallstack(const std::vector< FTL::CStrRef > & callstack, size_t numCalls) const
+  {
+    std::string result;
+    for(size_t i=0;i<numCalls;i++)
+    {
+      if(result.length() > 0)
+      {
+        result += " -> ";
+      }
+      result += callstack[i].c_str();
+    }
+    return result;
+  }
+
+  void traverseEntries(int parentIndex, const std::vector< ProfilingEntry > & entries, std::vector< ProfilingEntry > & result) const
+  { 
+    for(size_t i = 0; i < entries.size(); i++)
+    {
+      if(entries[i].m_parentIndex != parentIndex)
+        continue;
+      result.push_back(entries[i]);
+      traverseEntries(entries[i].m_index, entries, result);
+    }
+  }
+
   bool m_enabled;
   std::vector< ProfilingInfo > m_profilingInfos;
   std::vector< unsigned int > m_parentKeyStack;
   unsigned int m_numProfiles;
-  unsigned int m_stackEnd;
+  int m_stackLastIndex;
 };
 
 class AutoProfilingEvent
