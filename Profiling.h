@@ -174,9 +174,16 @@ public:
     if( index < 0 || index >= m_numProfiles )
       return false;
 
-    m_profilingInfos[index].m_elapsed += GetSecondsBetweenTicks(m_profilingInfos[index].m_begin, endTick);
-    m_profilingInfos[index].m_begin = m_profilingInfos[index].m_end = endTick;
-    m_profilingInfos[index].m_paused = true;
+    while(index != -1)
+    {
+      if(!m_profilingInfos[index].m_paused)
+      {
+        m_profilingInfos[index].m_elapsed += GetSecondsBetweenTicks(m_profilingInfos[index].m_begin, endTick);
+        m_profilingInfos[index].m_begin = m_profilingInfos[index].m_end = endTick;
+        m_profilingInfos[index].m_paused = true;
+      }
+      index = m_profilingInfos[index].m_parentIndex;
+    }
     return true;
   }
 
@@ -191,8 +198,15 @@ public:
     if( index < 0 || index >= m_numProfiles )
       return false;
 
-    m_profilingInfos[index].m_begin = m_profilingInfos[index].m_end = beginTick;
-    m_profilingInfos[index].m_paused = false;
+    while(index != -1)
+    {
+      if(m_profilingInfos[index].m_paused)
+      {
+        m_profilingInfos[index].m_begin = m_profilingInfos[index].m_end = beginTick;
+        m_profilingInfos[index].m_paused = false;
+      }
+      index = m_profilingInfos[index].m_parentIndex;
+    }
     return true;
   }
 
