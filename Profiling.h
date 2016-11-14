@@ -149,8 +149,8 @@ public:
   {
     uint64_t endTick = GetCurrentTicks();
 
-    assert( index >= 0 && index < m_numProfiles );
-    if( index < 0 || index >= m_numProfiles )
+    assert( index >= 0 && unsigned int(index) < m_numProfiles );
+    if( index < 0 || unsigned int(index) >= m_numProfiles )
       return false;
 
     assert( m_stackLastIndex != -1 );
@@ -170,8 +170,8 @@ public:
 
     uint64_t endTick = GetCurrentTicks();
 
-    assert( index >= 0 && index < m_numProfiles );
-    if( index < 0 || index >= m_numProfiles )
+    assert( index >= 0 && unsigned int(index) < m_numProfiles );
+    if( index < 0 || unsigned int(index) >= m_numProfiles )
       return false;
 
     while(index != -1)
@@ -194,8 +194,8 @@ public:
 
     uint64_t beginTick = GetCurrentTicks();
 
-    assert( index >= 0 && index < m_numProfiles );
-    if( index < 0 || index >= m_numProfiles )
+    assert( index >= 0 && unsigned int(index) < m_numProfiles );
+    if( index < 0 || unsigned int(index) >= m_numProfiles )
       return false;
 
     while(index != -1)
