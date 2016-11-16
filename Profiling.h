@@ -276,7 +276,7 @@ public:
       char buf[1024];
       if(indent.length() != entries[i].m_level * 2)
         indent.assign(entries[i].m_level * 2, ' ');
-      snprintf(buf, 1024, "%s[%s] called %d times, %g milliseconds.\n", indent.c_str(), entries[i].m_label, entries[i].m_invocations, entries[i].m_seconds * 1000.0);
+      snprintf(buf, 1024, "%s[%s] called %d times, %.3g ms (%.3g ms).\n", indent.c_str(), entries[i].m_label, entries[i].m_invocations, entries[i].m_seconds * 1000.0, entries[i].m_seconds * 1000.0 / double(entries[i].m_invocations));
       result += buf;
     }
     return result;
