@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <assert.h>
+#include <stdio.h>
 
 FTL_NAMESPACE_BEGIN
 
@@ -96,8 +97,8 @@ struct ProfilingEntry
   std::vector< FTL::CStrRef > m_callStack;
   int m_index;
   int m_parentIndex;
-  unsigned int m_level;
-  unsigned int m_invocations;
+  unsigned m_level;
+  unsigned m_invocations;
   double m_seconds;
 };
 
@@ -105,7 +106,7 @@ class ProfilingStack
 {
 public:
 
-  ProfilingStack(bool enabled = true, unsigned int initialStackSize = 4096 * 1024)
+  ProfilingStack(bool enabled = true, unsigned initialStackSize = 4096 * 1024)
     : m_enabled(enabled)
     , m_numProfiles(0)
     , m_stackLastIndex(-1)
@@ -135,7 +136,7 @@ public:
 
     if(m_numProfiles == m_profilingInfos.size())
       m_profilingInfos.resize(m_profilingInfos.size() * 2);
-    if(m_stackLastIndex == m_parentKeyStack.size() - 1)
+    if(m_stackLastIndex == int(m_parentKeyStack.size()) - 1)
       m_parentKeyStack.resize(m_parentKeyStack.size() * 2);
 
     m_profilingInfos[m_numProfiles] = ProfilingInfo(label, parentIndex);
@@ -149,8 +150,8 @@ public:
   {
     uint64_t endTick = GetCurrentTicks();
 
-    assert( index >= 0 && unsigned int(index) < m_numProfiles );
-    if( index < 0 || unsigned int(index) >= m_numProfiles )
+    assert( index >= 0 && unsigned(index) < m_numProfiles );
+    if( index < 0 || unsigned(index) >= m_numProfiles )
       return false;
 
     assert( m_stackLastIndex != -1 );
@@ -170,8 +171,8 @@ public:
 
     uint64_t endTick = GetCurrentTicks();
 
-    assert( index >= 0 && unsigned int(index) < m_numProfiles );
-    if( index < 0 || unsigned int(index) >= m_numProfiles )
+    assert( index >= 0 && unsigned(index) < m_numProfiles );
+    if( index < 0 || unsigned(index) >= m_numProfiles )
       return false;
 
     while(index != -1)
@@ -194,8 +195,8 @@ public:
 
     uint64_t beginTick = GetCurrentTicks();
 
-    assert( index >= 0 && unsigned int(index) < m_numProfiles );
-    if( index < 0 || unsigned int(index) >= m_numProfiles )
+    assert( index >= 0 && unsigned(index) < m_numProfiles );
+    if( index < 0 || unsigned(index) >= m_numProfiles )
       return false;
 
     while(index != -1)
@@ -213,7 +214,7 @@ public:
   std::vector< ProfilingEntry > getReportEntries() const
   {
     std::vector< ProfilingEntry > entries;
-    OrderedStringMap< unsigned int > lookup;
+    OrderedStringMap< unsigned > lookup;
 
     for(size_t i=0;i<m_numProfiles;i++)
     {
@@ -228,11 +229,11 @@ public:
       std::reverse(callstack.begin(), callstack.end());
       std::string callstackKey = getKeyForCallstack(callstack, callstack.size());
       
-      OrderedStringMap< unsigned int >::const_iterator it = lookup.find(callstackKey.c_str());
+      OrderedStringMap< unsigned >::const_iterator it = lookup.find(callstackKey.c_str());
       if(it == lookup.end())
       {
         ProfilingEntry entry(m_profilingInfos[i].m_label);
-        entry.m_index = (unsigned int)entries.size();
+        entry.m_index = (unsigned)entries.size();
         entry.m_parentIndex = -1;
         entry.m_callStack = callstack;
         entry.m_invocations = 1;
@@ -242,13 +243,13 @@ public:
         {
           std::string parentCallstackKey = getKeyForCallstack(callstack, callstack.size()-1);
 
-          OrderedStringMap< unsigned int >::const_iterator parentIt = lookup.find(parentCallstackKey.c_str());
+          OrderedStringMap< unsigned >::const_iterator parentIt = lookup.find(parentCallstackKey.c_str());
           assert(parentIt != lookup.end());
           entry.m_parentIndex = parentIt->second;
         }
 
         entry.m_seconds = m_profilingInfos[i].getSeconds();
-        lookup.insert(callstackKey.c_str(), (unsigned int)entries.size());
+        lookup.insert(callstackKey.c_str(), (unsigned)entries.size());
         entries.push_back(entry);
       }
       else
@@ -311,8 +312,8 @@ private:
 
   bool m_enabled;
   std::vector< ProfilingInfo > m_profilingInfos;
-  std::vector< unsigned int > m_parentKeyStack;
-  unsigned int m_numProfiles;
+  std::vector< unsigned > m_parentKeyStack;
+  unsigned m_numProfiles;
   int m_stackLastIndex;
 };
 
