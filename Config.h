@@ -95,6 +95,14 @@ inline float roundf( float x ) { return floorf(x+0.5f); }
 # define FTL_DELETED_FUNCTION
 #endif
 
+// From LLVM 3.3 source
+#if (__has_feature(cxx_override_control) \
+     || (defined(_MSC_VER) && _MSC_VER >= 1700))
+# define FTL_OVERRIDE override
+#else
+# define FTL_OVERRIDE
+#endif
+
 #if !defined(FTL_NAMESPACE)
 # define FTL_NAMESPACE FTL
 #endif
