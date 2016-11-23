@@ -148,6 +148,9 @@ public:
 
   bool endProfilingEvent(int index)
   {
+    if(!m_enabled)
+      return -1;
+    
     uint64_t endTick = GetCurrentTicks();
 
     assert( index >= 0 && unsigned(index) < m_numProfiles );
