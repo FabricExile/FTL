@@ -149,7 +149,7 @@ public:
   bool endProfilingEvent(int index)
   {
     if(!m_enabled)
-      return -1;
+      return false;
     
     uint64_t endTick = GetCurrentTicks();
 
