@@ -4,9 +4,10 @@
 
 #include <FTL/JSONDec.h>
 
+#include <climits>
 #include <iostream>
-#include <string>
 #include <stdint.h>
+#include <string>
 #include <vector>
 
 template<typename StringTy>
