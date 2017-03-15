@@ -537,7 +537,7 @@ public:
   void clear()
   {
     for ( Map::const_iterator it = m_map.begin(); it != m_map.end(); ++it )
-      delete it->second;
+      delete it->value();
     m_map.clear();
   }
 
@@ -549,13 +549,13 @@ public:
   JSONValue *maybeGet( StrRef key )
   {
     Map::const_iterator it = find( key );
-    return it != end()? it->second: 0;
+    return it != end()? it->value(): 0;
   }
 
   JSONValue const *maybeGet( StrRef key ) const
   {
     Map::const_iterator it = find( key );
-    return it != end()? it->second: 0;
+    return it != end()? it->value(): 0;
   }
 
   JSONValue *get( StrRef key )
@@ -706,8 +706,8 @@ protected:
     JSONObjectEnc<std::string> objectEnc( enc );
     for ( Map::const_iterator it = m_map.begin(); it != m_map.end(); ++it )
     {
-      StrRef key = it->first;
-      JSONValue const *value = it->second;
+      StrRef key = it->key( m_map );
+      JSONValue const *value = it->value();
       JSONEnc<std::string> memberEnc( objectEnc, key );
       value->encodeTo( memberEnc );
     }
