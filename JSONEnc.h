@@ -131,8 +131,9 @@ protected:
     StrRef delim
     )
   {
-    size_t delimCount = strs.empty()? 0: strs.size() - 1;
-    size_t expandAmount = 2 + delim.size() * delimCount;
+    const size_t delimSize = delim.size();
+    const size_t delimCount = strs.empty()? 0: strs.size() - 1;
+    size_t expandAmount = 2 + delimSize * delimCount;
     for ( ArrayRef<StrRef>::IT it = strs.begin(); it != strs.end(); ++it )
       expandAmount += 2 * it->size();
     reserve( expandAmount );
@@ -142,7 +143,7 @@ protected:
     const ArrayRef<StrRef>::IT itEnd = strs.end();
     for ( ArrayRef<StrRef>::IT it = itBegin; it != itEnd; ++it )
     {
-      if ( it != itBegin )
+      if ( delimSize > 0 && it != itBegin )
         appendQuotedStrChars( delim );
       appendQuotedStrChars( *it );
     }
