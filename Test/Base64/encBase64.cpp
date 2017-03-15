@@ -8,8 +8,6 @@
 #include <iostream>
 #include <string>
 
-#include <unistd.h>
-
 int main( int argc, char **argv )
 {
   std::string outputString;
