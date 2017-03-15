@@ -24,7 +24,6 @@ class OrderedStringMap
   struct Bucket
   {
     size_t entryIndex;
-    size_t keyHash;
 
     Bucket()
       { makeUnused(); }
@@ -48,6 +47,7 @@ public:
     Entry( Entry const &that )
       : m_keyIndex( that.m_keyIndex )
       , m_keySize( that.m_keySize )
+      , m_keyHash( that.m_keyHash )
       , m_value( that.m_value )
       {}
 
@@ -55,6 +55,7 @@ public:
     {
       m_keyIndex = that.m_keyIndex;
       m_keySize = that.m_keySize;
+      m_keyHash = that.m_keyHash;
       m_value = that.m_value;
       return *this;
     }
@@ -63,6 +64,7 @@ public:
     Entry( Entry &&that )
       : m_keyIndex( that.m_keyIndex )
       , m_keySize( that.m_keySize )
+      , m_keyHash( that.m_keyHash )
       , m_value( std::move( that.m_value ) )
       {}
 
@@ -70,6 +72,7 @@ public:
     {
       m_keyIndex = that.m_keyIndex;
       m_keySize = that.m_keySize;
+      m_keyHash = that.m_keyHash;
       m_value = std::move( that.m_value );
       return *this;
     }
@@ -79,10 +82,12 @@ public:
     Entry(
       size_t keyIndex,
       size_t keySize,
+      size_t keyHash,
       ValueTy const &value
       )
       : m_keyIndex( keyIndex )
       , m_keySize( keySize )
+      , m_keyHash( keyHash )
       , m_value( value )
       {}
 
@@ -91,16 +96,21 @@ public:
     Entry(
       size_t keyIndex,
       size_t keySize,
+      size_t keyHash,
       ValueTy &&value
       )
       : m_keyIndex( keyIndex )
       , m_keySize( keySize )
+      , m_keyHash( keyHash )
       , m_value( std::move( value ) )
       {}
 #endif
 
     bool isValid() const
       { return m_keyIndex != ~size_t(0); }
+
+    size_t keyHash() const
+      { return m_keyHash; }
 
     CStrRef key( OrderedStringMap const &map ) const
       { return CStrRef( map.m_keys.data() + m_keyIndex, m_keySize ); }
@@ -113,6 +123,7 @@ public:
 
     size_t m_keyIndex;
     size_t m_keySize;
+    size_t m_keyHash;
     ValueTy m_value;
   };
 
@@ -218,10 +229,9 @@ public:
     keyData[keySize] = 0;
 
     size_t entryIndex = m_entries.size();
-    m_entries.push_back( Entry( keyIndex, keySize, value ) );
+    m_entries.push_back( Entry( keyIndex, keySize, keyHash, value ) );
 
     bucket.entryIndex = entryIndex;
-    bucket.keyHash = keyHash;
 
     return true;
   }
@@ -285,7 +295,9 @@ private:
       if ( !oldBucket.isUsed() )
         continue;
 
-      size_t newBucketIndex = oldBucket.keyHash & newBucketsMask;
+      Entry const &entry = m_entries[oldBucket.entryIndex];
+
+      size_t newBucketIndex = entry.keyHash() & newBucketsMask;
       size_t i = 0;
       for (;;)
       {
