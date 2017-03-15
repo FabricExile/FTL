@@ -7,37 +7,38 @@
 #include <FTL/CStrRef.h>
 #include <map>
 #include <string>
-#if defined(FTL_PLATFORM_WINDOWS) || (defined(FTL_OS_DARWIN) && __cplusplus == 201103L)
-# include <unordered_map>
-#else
-# include <tr1/unordered_map>
-#endif
 #include <vector>
 
 FTL_NAMESPACE_BEGIN
 
-template<class ValueTy>
+template<class ValueTy, size_t MinHashesSize = 64>
 class OrderedStringMap
 {
-  OrderedStringMap( OrderedStringMap const & );
-  OrderedStringMap &operator=( OrderedStringMap const & );
+  OrderedStringMap( OrderedStringMap const & ) FTL_DELETED_FUNCTION;
+  OrderedStringMap &operator=( OrderedStringMap const & ) FTL_DELETED_FUNCTION;
 
-  typedef std::pair<CStrRef, ValueTy> KV;
-  typedef std::vector<KV> Vec;
-#if defined(FTL_PLATFORM_WINDOWS) || (defined(FTL_OS_DARWIN) && __cplusplus == 201103L)
-  typedef std::unordered_map<
-#else
-  typedef std::tr1::unordered_map<
-#endif
-    StrRef,
-    size_t,
-    StrRef::Hash,
-    StrRef::Equals
-    > Map;
+  struct Hash
+  {
+    size_t keyIndex;
+    size_t keySize;
+    size_t keyHash;
+    size_t valueIndex;
+
+    Hash()
+      { makeUnused(); }
+
+    bool isUsed() const
+      { return keyIndex != ~size_t(0); }
+
+    void makeUnused()
+      { keyIndex = ~size_t(0); }
+  };
 
 public:
 
-  OrderedStringMap() {}
+  OrderedStringMap()
+    : m_usedEntries( 0 )
+    {}
   ~OrderedStringMap() { clear(); }
 
   bool empty() const
@@ -68,38 +69,89 @@ public:
 
   void clear()
   {
-    m_map.clear();
-    for ( typename Vec::iterator it = m_vec.begin(); it != m_vec.end(); ++it )
-      delete [] it->first.c_str();
+    m_keys.clear();
+    m_hashes.resize( MinHashesSize );
+    for ( std::vector<Hash>::iterator it = m_hashes.begin();
+      it != m_hashes.end(); ++it )
+      it->makeUnused();
     m_vec.clear();
   }
 
   bool insert( StrRef key, ValueTy const &value )
   {
-    char *keyCStr = new char[key.size()+1];
-    memcpy( keyCStr, key.data(), key.size() );
-    keyCStr[key.size()] = '\0';
-
-    size_t index = m_vec.size();
-    m_vec.resize( index + 1 );
-    KV &kv = m_vec[index];
-    kv.first = CStrRef( keyCStr, key.size() );
-    kv.second = value;
-    std::pair<Map::iterator, bool> insertResult = m_map.insert(
-      std::pair<StrRef, size_t>( kv.first, index )
-      );
-    if ( !insertResult.second )
+    if ( m_usedEntries + 1 >= m_hashes.size() / 2 )
     {
-      delete [] keyCStr;
-      m_vec.resize( index );
+      std::vector<Hash> newHashes;
+      newHashes.resize( std::min( 2 * m_hashes.size(), MinHashesSize ) );
+      rehash( newHashes );
     }
-    return insertResult.second;
+
+    size_t keyHash = key.hash();
+    size_t hashesSize = m_hashes.size();
+    size_t hashesMask = hashesSize - 1;
+
+    size_t h = keyHash & hashesMask;
+    for ( size_t i = 1; ; ++i )
+    {
+      Hash const &thatHash = newHashes[h];
+      if ( !thatHash.isUsed() )
+        break;
+
+      if ( StrRef( &m_keys[thatHash.keyIndex], thatHash.keySize ) == key )
+        return false;
+
+      h = ( h + i ) & hashesMask;
+    }
+
+    ++m_usedEntries;
+
+    size_t valueIndex = m_values.size();
+    m_values.push_back( value );
+
+    size_t keyIndex = m_keys.size();
+    m_keys.resize( keyIndex + key.size() );
+    memcpy( m_keys.data() + keyIndex, key.data(), key.size() );
+
+    Hash &hash = m_hashes[h];
+    assert( !hash.isUsed() );
+    hash.keyHash = keyHash;
+    hash.keyIndex = keyIndex;
+    hash.keySize = key.size();
+    hash.valueIndex = valueIndex;
   }
 
 private:
 
-  Map m_map;
-  Vec m_vec;
+  void rehash( std::vector<Hash> &newHashes )
+  {
+    size_t newHashesSize = newHashes.size();
+    size_t newHashesMask = newHashesSize - 1;
+
+    for ( std::vector<Hash>::const_iterator it = m_hashes.begin();
+      it != m_hashes.end(); ++it )
+    {
+      Hash const &hash = *it;
+      if ( !hash.isUsed() )
+        continue;
+
+      size_t h = hash.keyHash & newHashesMask;
+      for ( size_t i = 1; ; ++i )
+      {
+        Hash const &thatHash = newHashes[h];
+        if ( !thatHash.isUsed() )
+          break;
+        h = ( h + i ) & hashesMask;
+      }
+      newHashes[h] = hash;
+    }
+
+    m_hashes.swap( newHashes );
+  }
+
+  std::vector<char> m_keys;
+  std::vector<Hash> m_hashes;
+  std::vector<ValueTy> m_values;
+  size_t m_usedEntries;
 };
 
 FTL_NAMESPACE_END
