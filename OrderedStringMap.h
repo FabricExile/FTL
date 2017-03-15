@@ -23,19 +23,17 @@ class OrderedStringMap
 
   struct Bucket
   {
-    size_t keyIndex;
-    size_t keySize;
-    size_t keyHash;
     size_t entryIndex;
+    size_t keyHash;
 
     Bucket()
       { makeUnused(); }
 
     bool isUsed() const
-      { return keyIndex != ~size_t(0); }
+      { return entryIndex != ~size_t(0); }
 
     void makeUnused()
-      { keyIndex = ~size_t(0); }
+      { entryIndex = ~size_t(0); }
   };
   typedef std::vector<Bucket> BucketVec;
 
@@ -100,6 +98,9 @@ public:
       , m_value( std::move( value ) )
       {}
 #endif
+
+    bool isValid() const
+      { return m_keyIndex != ~size_t(0); }
 
     CStrRef key( OrderedStringMap const &map ) const
       { return CStrRef( map.m_keys.data() + m_keyIndex, m_keySize ); }
@@ -219,10 +220,8 @@ public:
     size_t entryIndex = m_entries.size();
     m_entries.push_back( Entry( keyIndex, keySize, value ) );
 
-    bucket.keyHash = keyHash;
-    bucket.keyIndex = keyIndex;
-    bucket.keySize = keySize;
     bucket.entryIndex = entryIndex;
+    bucket.keyHash = keyHash;
 
     return true;
   }
@@ -244,8 +243,10 @@ private:
     for (;;)
     {
       Bucket const &bucket = m_buckets[bucketIndex];
-      if ( !bucket.isUsed()
-        || StrRef( m_keys.data() + bucket.keyIndex, bucket.keySize ) == key )
+      if ( !bucket.isUsed() )
+        return bucketIndex;
+      Entry const &entry = m_entries[bucket.entryIndex];
+      if ( entry.key( *this ) == key )
         return bucketIndex;
 
       bucketIndex = ( bucketIndex + (++i) ) & bucketsMask;
