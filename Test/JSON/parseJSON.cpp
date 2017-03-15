@@ -66,7 +66,7 @@ void AppendQuotedString(
 }
 
 void displayEnt(
-  FTL::JSONEnt const &ent,
+  FTL::JSONEnt<FTL::JSONStrWithLoc> const &ent,
   std::string const &indent
   )
 {
@@ -74,29 +74,29 @@ void displayEnt(
   std::cout << ent.getLine() << ':' << ent.getColumn() << ' ';
   switch ( ent.getType() )
   {
-    case FTL::JSONEnt::Type_Null:
+    case FTL::JSONEnt<FTL::JSONStrWithLoc>::Type_Null:
       std::cout << FTL_STR("NULL\n");
       break;
-    case FTL::JSONEnt::Type_Boolean:
+    case FTL::JSONEnt<FTL::JSONStrWithLoc>::Type_Boolean:
       std::cout << FTL_STR("BOOLEAN ");
       std::cout << (ent.booleanValue()? "true": "false");
       std::cout << '\n';
       break;
-    case FTL::JSONEnt::Type_Int32:
+    case FTL::JSONEnt<FTL::JSONStrWithLoc>::Type_Int32:
     {
       std::cout << FTL_STR("INTEGER ");
       std::cout << ent.int32Value();
       std::cout << '\n';
     }
     break;
-    case FTL::JSONEnt::Type_Float64:
+    case FTL::JSONEnt<FTL::JSONStrWithLoc>::Type_Float64:
     {
       std::cout << FTL_STR("SCALAR ");
       std::cout << ent.float64Value();
       std::cout << '\n';
       break;
     }
-    case FTL::JSONEnt::Type_String:
+    case FTL::JSONEnt<FTL::JSONStrWithLoc>::Type_String:
     {
       std::string string;
       ent.stringAppendTo( string );
@@ -111,12 +111,12 @@ void displayEnt(
       std::cout << '\n';
       break;
     }
-    case FTL::JSONEnt::Type_Object:
+    case FTL::JSONEnt<FTL::JSONStrWithLoc>::Type_Object:
     {
       std::cout << FTL_STR("OBJECT ") << ent.objectSize() << '\n';
       FTL::JSONStrWithLoc ds( ent.getRawJSONStr() );
-      FTL::JSONObjectDec objectDec( ds );
-      FTL::JSONEnt key, value;
+      FTL::JSONObjectDec<FTL::JSONStrWithLoc> objectDec( ds );
+      FTL::JSONEnt<FTL::JSONStrWithLoc> key, value;
       while ( objectDec.getNext( key, value ) )
       {
         displayEnt( key, "  " + indent );
@@ -124,12 +124,12 @@ void displayEnt(
       }
     }
     break;
-    case FTL::JSONEnt::Type_Array:
+    case FTL::JSONEnt<FTL::JSONStrWithLoc>::Type_Array:
     {
       std::cout << FTL_STR("ARRAY ") << ent.arraySize() << '\n';
       FTL::JSONStrWithLoc ds( ent.getRawJSONStr() );
-      FTL::JSONArrayDec arrayDec( ds );
-      FTL::JSONEnt element;
+      FTL::JSONArrayDec<FTL::JSONStrWithLoc> arrayDec( ds );
+      FTL::JSONEnt<FTL::JSONStrWithLoc> element;
       while ( arrayDec.getNext( element ) )
         displayEnt( element, "  " + indent );
     }
@@ -166,10 +166,10 @@ void parseJSON( FILE *fp )
   FTL::JSONStrWithLoc strWithLoc(
     FTL::StrRef( jsonInput.empty()? 0: &jsonInput[0], jsonInput.size() )
     );
-  FTL::JSONDec decoder( strWithLoc );
+  FTL::JSONDec<FTL::JSONStrWithLoc> decoder( strWithLoc );
   try
   {
-    FTL::JSONEnt ent;
+    FTL::JSONEnt<FTL::JSONStrWithLoc> ent;
     while ( decoder.getNext( ent ) )
       displayEnt( ent, "" );
   }

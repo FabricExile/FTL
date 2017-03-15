@@ -61,6 +61,7 @@ public:
   size_t size() const { return _size; }
   bool empty() const { return _size == 0; }
   EleTy const *data() const { return _data; }
+  size_t dataSize() const { return size() * sizeof( EleTy ); }
 
   EleTy const &operator[]( size_t index ) const
   {

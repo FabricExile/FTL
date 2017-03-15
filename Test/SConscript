@@ -3,11 +3,20 @@
 #
 
 Import('parentEnv')
+
+env = parentEnv.Clone()
+env.Append(CPPPATH = [env.Dir('#')])
+if env['FABRIC_BUILD_OS'] == 'Darwin':
+  env.Append(CXXFLAGS = ['-std=c++03'])
+  env.Append(CXXFLAGS = ['-stdlib=libstdc++'])
+  env.Append(LINKFLAGS = ['-stdlib=libstdc++'])
+
 ftlTests = SConscript(
   dirs = [
     'JSON',
+    'Base64',
     ],
-  exports={'parentEnv': parentEnv}
+  exports={'parentEnv': env}
   )
 Alias('test-ftl', ftlTests)
 Export('ftlTests')

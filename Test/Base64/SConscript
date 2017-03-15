@@ -1,0 +1,190 @@
+#
+# Copyright (c) 2010-2017 Fabric Software Inc. All rights reserved.
+#
+
+import os, subprocess, re, json
+Import('parentEnv')
+
+env = parentEnv.CloneSubStage('Base64')
+
+def _decBase64TestEmitter(target, source, env, toolExec):
+  outputBase = source[0].srcnode().abspath[:-4]
+  baseFile = '.'.join([outputBase, 'b64'])
+  if not os.path.exists(baseFile):
+    return None,None
+  
+  outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], env['FABRIC_BUILD_ARCH'], 'bin'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], 'bin'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, 'bin'])
+  if not os.path.exists(outputFile):
+    print "*** WARNING: Skipping test " + str(baseFile) + " since it is missing an expected output"
+    return None,None
+  
+  source.append(outputFile)
+  source.append(toolExec)
+  return target, source
+
+def _decBase64TestCallback(target, source, env, toolExec):
+  b64File = os.path.basename(source[0].abspath)
+  
+  base = source[0].srcnode().abspath[:-5]
+  if os.path.exists('.'.join([base,env['FABRIC_BUILD_OS'],'skip']))\
+    or os.path.exists('.'.join([base,'skip'])):
+    print "Skip " + b64File
+    return None
+
+  envFilename = '.'.join([base,'env'])
+  if os.path.exists(envFilename):
+    with open (envFilename, "r") as envFile:
+      envVars = json.load(envFile)
+  else:
+    envVars = {}
+  env = os.environ.copy()
+  for k, v in envVars.iteritems():
+    env[k] = v
+  
+  actualFile = open(target[0].abspath, 'w')
+  try:
+    subprocess.call(
+      [str(toolExec[0]), str(source[0])],
+      stdout = actualFile,
+      stderr = actualFile,
+      env = env,
+    )
+  except:
+    pass
+  actualFile.close()
+  
+  expectedFile = open(source[1].abspath, 'rb')
+  expectedContents = expectedFile.read()
+  expectedFile.close()
+  
+  actualFile = open(target[0].abspath, 'rb')
+  actualContents = actualFile.read()
+  actualFile.close()
+  
+  if expectedContents != actualContents:
+    print "FAIL [dec] " + b64File
+    subprocess.call(
+      ['diff', '-u', source[1].abspath, target[0].abspath]
+    )
+    return 1
+  else:
+    print "PASS [dec] " + b64File
+    return None
+
+decBase64 = env.Program('decBase64.cpp')
+Alias('decBase64', decBase64)
+def decBase64TestEmitter(target, source, env):
+  return _decBase64TestEmitter(target, source, env, decBase64)
+def decBase64TestCallback(target, source, env):
+  return _decBase64TestCallback(target, source, env, decBase64)
+decBase64TestAction = env.Action(decBase64TestCallback, None)
+env.Append(BUILDERS = {
+  "decBase64Test": Builder(
+    action = decBase64TestAction,
+    suffix = '.bin.test-result',
+    src_suffix = '.b64',
+    emitter = decBase64TestEmitter
+    )
+  })
+
+def _encBase64TestEmitter(target, source, env, toolExec):
+  outputBase = source[0].srcnode().abspath[:-4]
+  baseFile = '.'.join([outputBase, 'bin'])
+  if not os.path.exists(baseFile):
+    return None,None
+  
+  outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], env['FABRIC_BUILD_ARCH'], 'b64'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], 'b64'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, 'b64'])
+  if not os.path.exists(outputFile):
+    print "*** WARNING: Skipping test " + str(baseFile) + " since it is missing an expected output"
+    return None,None
+  
+  source.append(outputFile)
+  source.append(toolExec)
+  return target, source
+
+def _encBase64TestCallback(target, source, env, toolExec):
+  binFile = os.path.basename(source[0].abspath)
+  
+  base = source[0].srcnode().abspath[:-5]
+  if os.path.exists('.'.join([base,env['FABRIC_BUILD_OS'],'skip']))\
+    or os.path.exists('.'.join([base,'skip'])):
+    print "Skip " + binFile
+    return None
+
+  envFilename = '.'.join([base,'env'])
+  if os.path.exists(envFilename):
+    with open (envFilename, "r") as envFile:
+      envVars = json.load(envFile)
+  else:
+    envVars = {}
+  env = os.environ.copy()
+  for k, v in envVars.iteritems():
+    env[k] = v
+  
+  actualFile = open(target[0].abspath, 'w')
+  try:
+    subprocess.call(
+      [str(toolExec[0]), str(source[0])],
+      stdout = actualFile,
+      stderr = actualFile,
+      env = env,
+    )
+  except:
+    pass
+  actualFile.close()
+  
+  expectedFile = open(source[1].abspath, 'r')
+  expectedContents = expectedFile.read()
+  expectedFile.close()
+  
+  actualFile = open(target[0].abspath, 'r')
+  actualContents = actualFile.read()
+  actualFile.close()
+  
+  if expectedContents != actualContents:
+    print "FAIL [enc] " + binFile
+    subprocess.call(
+      ['diff', '-u', source[1].abspath, target[0].abspath]
+    )
+    return 1
+  else:
+    print "PASS [enc] " + binFile
+    return None
+
+encBase64 = env.Program('encBase64.cpp')
+Alias('encBase64', encBase64)
+def encBase64TestEmitter(target, source, env):
+  return _encBase64TestEmitter(target, source, env, encBase64)
+def encBase64TestCallback(target, source, env):
+  return _encBase64TestCallback(target, source, env, encBase64)
+encBase64TestAction = env.Action(encBase64TestCallback, None)
+env.Append(BUILDERS = {
+  "encBase64Test": Builder(
+    action = encBase64TestAction,
+    suffix = '.b64.test-result',
+    src_suffix = '.bin',
+    emitter = encBase64TestEmitter
+    )
+  })
+
+base64Tests = []
+for b64File in env.Glob('*.b64'):
+  thisBase64Tests = [];
+  thisBase64Tests.append(env.AlwaysBuild(env.NoCache(env.decBase64Test(b64File))))
+  Alias(os.path.basename(str(b64File)), thisBase64Tests)
+  base64Tests += thisBase64Tests
+for binFile in env.Glob('*.bin'):
+  thisBase64Tests = [];
+  thisBase64Tests.append(env.AlwaysBuild(env.NoCache(env.encBase64Test(binFile))))
+  Alias(os.path.basename(str(binFile)), thisBase64Tests)
+  base64Tests += thisBase64Tests
+Alias('test-ftl-base64', base64Tests)
+Return('base64Tests')
