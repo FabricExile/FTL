@@ -9,6 +9,7 @@
 #include <FTL/JSONEnc.h>
 #include <FTL/OrderedStringMap.h>
 #include <FTL/OwnedPtr.h>
+#include <FTL/SmallString.h>
 
 #include <assert.h>
 
@@ -320,7 +321,7 @@ public:
     : JSONValue( Type_String )
     , m_value( value ) {}
 
-  static JSONString *CreateWithSwap( std::string &value )
+  static JSONString *CreateWithSwap( SmallString<16> &value )
   {
     JSONString *result = new JSONString;
     result->m_value.swap( value );
@@ -343,7 +344,7 @@ protected:
 
 private:
 
-  std::string m_value;
+  SmallString<16> m_value;
 };
 
 inline FTL::CStrRef JSONValue::getStringValue() const
@@ -737,7 +738,7 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
 
     case JSONEnt<JSONStrTy>::Type_String:
     {
-      std::string string;
+      SmallString<16> string;
       je.stringAppendTo( string ); 
       return JSONString::CreateWithSwap( string );
     }
