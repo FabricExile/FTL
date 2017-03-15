@@ -4,9 +4,7 @@
 
 #include <FTL/JSONDec.h>
 
-#include <climits>
 #include <iostream>
-#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -14,7 +12,7 @@ template<typename StringTy>
 void AppendQuotedString(
   FTL::StrRef str,
   StringTy &string,
-  uint32_t maxLength = UINT32_MAX,
+  uint32_t maxLength = ~uint32_t(0),
   char quote = '\''
   )
 {
