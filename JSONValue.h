@@ -492,7 +492,7 @@ private:
 
 class JSONObject : public JSONValue
 {
-  typedef OrderedStringMap<JSONValue *> Map;
+  typedef OrderedStringMap<JSONValue *, 3> Map;
 
 public:
 
