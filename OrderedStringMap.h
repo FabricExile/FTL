@@ -240,7 +240,7 @@ public:
     if ( m_entries.size() == (~IndTy(0) / 2) )
       throw OrderStringMapFullException();
 
-    if ( m_entries.size() + 1 >= m_buckets.size() / 2 )
+    if ( m_entries.size() + 1 > m_buckets.size() / 2 )
     {
       rehash(
         std::max(

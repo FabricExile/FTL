@@ -36,9 +36,9 @@ int main( int argc, char **argv )
     for ( size_t j = 0; j < 200; ++j )
     {
       FTL::JSONObject const *obj = array->getObject( j );
-      check( obj->getFloat64( "width" ) == 10.0 ); 
-      check( obj->getFloat64( "height" ) == 16.0 ); 
-      check( obj->getString( "text" ) == FTL_STR("Hello World") ); 
+      check( obj->getFloat64( FTL_STR("width") ) == 10.0 ); 
+      check( obj->getFloat64( FTL_STR("height") ) == 16.0 ); 
+      check( obj->getString( FTL_STR("text") ) == FTL_STR("Hello World") ); 
     }
   }
 
