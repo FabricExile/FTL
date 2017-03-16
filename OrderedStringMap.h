@@ -40,6 +40,12 @@ template<
   >
 class OrderedStringMap
 {
+public:
+
+  typedef SmallString<SmallStringSize, IndTy> KeyTy;
+
+private:
+
   OrderedStringMap( OrderedStringMap const & ) FTL_DELETED_FUNCTION;
   OrderedStringMap &operator=( OrderedStringMap const & ) FTL_DELETED_FUNCTION;
 
@@ -57,10 +63,6 @@ class OrderedStringMap
       { entryIndex = ~IndTy(0); }
   };
   typedef std::vector<Bucket> BucketVec;
-
-  typedef SmallString<SmallStringSize, IndTy> KeyTy;
-
-public:
 
   class Entry
   {
@@ -98,7 +100,6 @@ public:
     }
 #endif
 
-    // [pz 20170315] Do not use outside of this class; will become private
     Entry(
       StrRef keyStr,
       IndTy keyHash,
@@ -110,7 +111,6 @@ public:
       {}
 
 #if FTL_HAS_RVALUE_REFERENCES
-    // [pz 20170315] Do not use outside of this class; will become private
     Entry(
       StrRef keyStr,
       IndTy keyHash,
@@ -121,7 +121,6 @@ public:
       , m_value( std::move( value ) )
       {}
 
-    // [pz 20170315] Do not use outside of this class; will become private
     Entry(
       SmallString<16> &&key,
       IndTy keyHash,
@@ -132,7 +131,6 @@ public:
       , m_value( value )
       {}
 
-    // [pz 20170315] Do not use outside of this class; will become private
     Entry(
       SmallString<16> &&key,
       IndTy keyHash,
@@ -164,6 +162,8 @@ public:
   };
 
   typedef std::vector<Entry> EntryVec;
+
+public:
 
   OrderedStringMap() {}
   ~OrderedStringMap() {}
@@ -240,20 +240,7 @@ public:
 
   bool insert( StrRef key, ValueTy const &value )
   {
-    if ( m_entries.size() == (~IndTy(0) / 2) )
-      throw OrderStringMapFullException();
-
-    if ( m_entries.size() + 1 > m_buckets.size() / 2 )
-    {
-      rehash(
-        std::max(
-          2 * IndTy( m_buckets.size() ),
-          IndTy(1) << MinBucketCountLog2
-          )
-        );
-
-      m_entries.reserve( 2 * m_entries.size() );
-    }
+    prepareForInsert();
 
     const IndTy keyHash = key.hash();
     Bucket &bucket = findBucket( key, keyHash );
@@ -268,7 +255,80 @@ public:
     return true;
   }
 
+#if FTL_HAS_RVALUE_REFERENCES
+  bool insert( Key &&key, ValueTy const &value )
+  {
+    prepareForInsert();
+
+    const IndTy keyHash = key.hash();
+    Bucket &bucket = findBucket( key, keyHash );
+    if ( bucket.isUsed() )
+      return false;
+
+    IndTy entryIndex = m_entries.size();
+    m_entries.push_back( Entry( std::move( key ), keyHash, value ) );
+
+    bucket.entryIndex = entryIndex;
+
+    return true;
+  }
+
+  bool insert( StrRef key, ValueTy &&value )
+  {
+    prepareForInsert();
+
+    const IndTy keyHash = key.hash();
+    Bucket &bucket = findBucket( key, keyHash );
+    if ( bucket.isUsed() )
+      return false;
+
+    IndTy entryIndex = m_entries.size();
+    m_entries.push_back( Entry( key, keyHash, std::move( value ) ) );
+
+    bucket.entryIndex = entryIndex;
+
+    return true;
+  }
+
+  bool insert( Key &&key, ValueTy &&value )
+  {
+    prepareForInsert();
+
+    const IndTy keyHash = key.hash();
+    Bucket &bucket = findBucket( key, keyHash );
+    if ( bucket.isUsed() )
+      return false;
+
+    IndTy entryIndex = m_entries.size();
+    m_entries.push_back(
+      Entry( std::move( key ), keyHash, std::move( value ) )
+      );
+
+    bucket.entryIndex = entryIndex;
+
+    return true;
+  }
+#endif
+
 private:
+
+  void prepareForInsert()
+  {
+    if ( m_entries.size() == (~IndTy(0) / 2) )
+      throw OrderStringMapFullException();
+
+    if ( m_entries.size() + 1 > m_buckets.size() / 2 )
+    {
+      rehash(
+        std::max(
+          2 * IndTy( m_buckets.size() ),
+          IndTy(1) << MinBucketCountLog2
+          )
+        );
+
+      m_entries.reserve( 2 * m_entries.size() );
+    }
+  }
 
   // Always returns a hash bucket index.  If the resulting bucket.isUsed(),
   // the key matches; otherwise, the entry is empty.
