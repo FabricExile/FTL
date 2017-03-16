@@ -765,6 +765,7 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
           throw JSONInternalErrorException();
         JSONValue *value = Create( valueJE );
         bool insertResult;
+#if !FTL_HAS_RVALUE_REFERENCES
         if ( keyJE.stringIsShort() )
         {
           insertResult = object->insert(
@@ -774,11 +775,14 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
         }
         else
         {
+#endif
           insertResult = object->insert(
             keyJE.template stringGetAs<JSONObject::KeyTy>(),
             value
             );
+#if !FTL_HAS_RVALUE_REFERENCES
         }
+#endif
         if ( !insertResult )
         {
           delete value;
