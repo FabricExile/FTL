@@ -866,16 +866,20 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       if ( ent )
         ent->rawJSONStr = ds;
 
+      bool mantIsNeg = 0;
       if ( !ds.empty() && ds.front() == '-' )
       {
+        mantIsNeg = true;
         ds.drop();
         if ( ds.empty() )
           throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("expected decimal digit") );
       }
 
+      int32_t whole;
       switch ( ds.front() )
       {
         case '0':
+          whole = 0;
           ds.drop();
           break;
         case '1':
@@ -887,9 +891,11 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
         case '7':
         case '8':
         case '9':
+          whole = ds.front() - '0';
           ds.drop();
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            whole = 10 * whole + (ds.front() - '0');
             ds.drop();
           }
           break;
@@ -902,17 +908,10 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       {
         if ( ent )
         {
+          if ( mantIsNeg )
+            whole = -whole;
           ent->type = JSONEnt::Type_Int32;
-
-          static const uint32_t maxIntegerLength = 15;
-          uint32_t length = ent->rawJSONStr.size() - ds.size();
-          if ( length > maxIntegerLength )
-            throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("integer too long") );
-
-          char buf[maxIntegerLength+1];
-          memcpy( buf, ent->rawJSONStr.data(), length );
-          buf[length] = '\0';
-          ent->value.int32 = atoi( buf );
+          ent->value.int32 = whole;
         }
       }
       else
@@ -920,6 +919,8 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
         if ( ent )
           ent->type = JSONEnt::Type_Float64;
 
+        int64_t mant = whole;
+        int32_t expAdj = 0;
         if ( ds.front() == '.' )
         {
           ds.drop();
@@ -929,91 +930,48 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
 
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            mant = 10 * mant + (ds.front() - '0');
+            --expAdj;
             ds.drop();
           }
         }
 
+        int32_t exp = 0;
         if ( !ds.empty() && (ds.front() == 'e' || ds.front() == 'E') )
         {
           ds.drop();
 
+          bool expIsNeg;
           if ( !ds.empty() && (ds.front() == '-' || ds.front() == '+') )
           {
+            expIsNeg = ds.front() == '-';
             ds.drop();
           }
+          else expIsNeg = false;
 
           if ( ds.empty() || ds.front() < '0' || ds.front() > '9' )
             throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("expected decimal digit") );
 
+          exp = 10 * exp + (ds.front() - '0');
           ds.drop();
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            exp = 10 * exp + (ds.front() - '0');
             ds.drop();
           }
+
+          if ( expIsNeg )
+            exp = -exp;
         }
+        exp += expAdj;
 
         if ( ent )
         {
-          static const uint32_t maxScalarLength = 31;
-          uint32_t length = ent->rawJSONStr.size() - ds.size();
-          if ( length > maxScalarLength )
-            throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("floating point too long") );
-
-          char buf[maxScalarLength+1];
-          memcpy( buf, ent->rawJSONStr.data(), length );
-          buf[length] = '\0';
-
-          // [pz 20170315] One of the answers on
-          // http://stackoverflow.com/questions/4392665/converting-string-to-float-without-atof-in-c
-          char *s = buf;
-          double rez = 0, fact = 1;
-          if ( *s == '-' )
-          {
-            s++;
-            fact = -1;
-          }
-          for ( int point_seen = 0; *s; s++ )
-          {
-            if ( *s == 'e' || *s == 'E' )
-            {
-              ++s;
-              break;
-            }
-
-            if ( *s == '.' )
-            {
-              point_seen = 1; 
-              continue;
-            }
-
-            int d = *s - '0';
-            if ( d >= 0 && d <= 9 )
-            {
-              if ( point_seen )
-                fact /= 10.0;
-              rez = rez * 10.0 + (double)d;
-            }
-          }
-          ent->value.float64 = rez * fact;
-          bool neg_exp = false;
-          if ( *s == '-' )
-          {
-            neg_exp = true;
-            ++s;
-          }
-          int exp = 0;
-          for ( ; *s; s++ )
-          {
-            int d = *s - '\0';
-            if ( d >= 0 && d <= 9 )
-              exp = 10 * exp + d;
-          }
+          if ( mantIsNeg )
+            mant = -mant;
+          ent->value.float64 = double(mant);
           if ( exp != 0 )
-          {
-            if ( neg_exp )
-              exp = -exp;
-            ent->value.float64 *= pow( 10.0, exp );
-          }
+            ent->value.float64 *= pow( 10.0, double( exp ) );
         }
       }
       
