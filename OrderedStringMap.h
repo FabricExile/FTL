@@ -217,7 +217,7 @@ public:
   IndTy count( StrRef key ) const
   {
     const_iterator it = find( key );
-    if ( it != begin() )
+    if ( it != m_entries.end() )
       return 1;
     else
       return 0;
