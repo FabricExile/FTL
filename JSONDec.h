@@ -919,8 +919,8 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
         if ( ent )
           ent->type = JSONEnt::Type_Float64;
 
-        int64_t mant = whole;
-        int32_t expAdj = 0;
+        double frac = 0;
+        double fracMult = 1.0;
         if ( ds.front() == '.' )
         {
           ds.drop();
@@ -930,12 +930,13 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
 
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
-            mant = 10 * mant + (ds.front() - '0');
-            --expAdj;
+            frac = 10 * frac + (ds.front() - '0');
+            fracMult *= 0.1;
             ds.drop();
           }
         }
 
+        double mant = double(whole) + double(frac) * fracMult;
         int32_t exp = 0;
         if ( !ds.empty() && (ds.front() == 'e' || ds.front() == 'E') )
         {
@@ -963,7 +964,6 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
           if ( expIsNeg )
             exp = -exp;
         }
-        exp += expAdj;
 
         if ( ent )
         {
