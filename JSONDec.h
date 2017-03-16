@@ -282,6 +282,9 @@ public:
     return value.string.shortData;
   }
 
+  StrRef stringShortStr() const
+    { return StrRef( stringShortData(), stringLength() ); }
+
   void stringGetData( char *data ) const
   {
     assert( isString() );
@@ -318,6 +321,14 @@ public:
       string.resize( newSize );
       stringGetData( &string[oldSize] );
     }
+  }
+
+  template<typename StringTy>
+  StringTy stringGetAs() const
+  {
+    StringTy string;
+    stringAppendTo( string );
+    return string;
   }
 
   // Object

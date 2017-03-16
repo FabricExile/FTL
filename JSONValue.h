@@ -497,6 +497,8 @@ class JSONObject : public JSONValue
 
 public:
 
+  typedef Map::KeyTy KeyTy;
+
   static bool classof( JSONValue const *jsonValue )
     { return jsonValue->getType() == Type_Object; }
 
@@ -546,6 +548,13 @@ public:
   {
     return m_map.insert( key, value );
   }
+
+#if FTL_HAS_RVALUE_REFERENCES
+  bool insert( KeyTy &&key, JSONValue *value )
+  {
+    return m_map.insert( std::move( key ), value );
+  }
+#endif
 
   JSONValue *maybeGet( StrRef key )
   {
@@ -754,19 +763,23 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
       {
         if ( !keyJE.isString() )
           throw JSONInternalErrorException();
-        FTL::StrRef key;
+        JSONValue *value = Create( valueJE );
+        bool insertResult;
         if ( keyJE.stringIsShort() )
-          key = FTL::StrRef( keyJE.stringShortData(), keyJE.stringLength() );
+        {
+          insertResult = object->insert(
+            keyJE.stringShortStr(),
+            value
+            );
+        }
         else
         {
-          char *longKeyCStr = static_cast<char *>(
-            alloca( keyJE.stringLength() + 1 )
+          insertResult = object->insert(
+            keyJE.template stringGetAs<JSONObject::KeyTy>(),
+            value
             );
-          keyJE.stringGetData( longKeyCStr );
-          key = FTL::StrRef( longKeyCStr, keyJE.stringLength() );
         }
-        JSONValue *value = Create( valueJE );
-        if ( !object->insert( key, value ) )
+        if ( !insertResult )
         {
           delete value;
           throw JSONMalformedException(
