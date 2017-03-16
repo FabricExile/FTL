@@ -6,15 +6,36 @@
 
 #include <FTL/Config.h>
 #include <FTL/CStrRef.h>
+#include <FTL/SmallString.h>
 
+#include <exception>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
 FTL_NAMESPACE_BEGIN
 
+class OrderStringMapException : public std::exception
+{
+public:
+
+  OrderStringMapException() {}
+};
+
+class OrderStringMapFullException : public OrderStringMapException
+{
+public:
+
+  OrderStringMapFullException() {}
+
+  virtual char const *what() const throw()
+    { return "OrderedStringMap is full"; }
+};
+
 template<
-  class ValueTy,
-  unsigned MinBucketCountLog2 = 6
+  typename ValueTy,
+  unsigned MinBucketCountLog2 = 6,
+  typename IndTy = uint32_t
   >
 class OrderedStringMap
 {
@@ -23,16 +44,16 @@ class OrderedStringMap
 
   struct Bucket
   {
-    size_t entryIndex;
+    IndTy entryIndex;
 
     Bucket()
       { makeUnused(); }
 
     bool isUsed() const
-      { return entryIndex != ~size_t(0); }
+      { return entryIndex != ~IndTy(0); }
 
     void makeUnused()
-      { entryIndex = ~size_t(0); }
+      { entryIndex = ~IndTy(0); }
   };
   typedef std::vector<Bucket> BucketVec;
 
@@ -42,19 +63,17 @@ public:
   {
   public:
 
-    Entry() : m_keyIndex( ~size_t(0) ) {}
+    Entry() {}
 
     Entry( Entry const &that )
-      : m_keyIndex( that.m_keyIndex )
-      , m_keySize( that.m_keySize )
+      : m_key( that.m_key )
       , m_keyHash( that.m_keyHash )
       , m_value( that.m_value )
       {}
 
     Entry &operator=( Entry const &that )
     {
-      m_keyIndex = that.m_keyIndex;
-      m_keySize = that.m_keySize;
+      m_key = that.m_key;
       m_keyHash = that.m_keyHash;
       m_value = that.m_value;
       return *this;
@@ -62,16 +81,14 @@ public:
 
 #if FTL_HAS_RVALUE_REFERENCES
     Entry( Entry &&that )
-      : m_keyIndex( that.m_keyIndex )
-      , m_keySize( that.m_keySize )
+      : m_key( std::move( that.m_key ) )
       , m_keyHash( that.m_keyHash )
       , m_value( std::move( that.m_value ) )
       {}
 
     Entry &operator=( Entry &&that )
     {
-      m_keyIndex = that.m_keyIndex;
-      m_keySize = that.m_keySize;
+      m_key = std::move( that.m_key );
       m_keyHash = that.m_keyHash;
       m_value = std::move( that.m_value );
       return *this;
@@ -80,13 +97,11 @@ public:
 
     // [pz 20170315] Do not use outside of this class; will become private
     Entry(
-      size_t keyIndex,
-      size_t keySize,
-      size_t keyHash,
+      StrRef keyStr,
+      IndTy keyHash,
       ValueTy const &value
       )
-      : m_keyIndex( keyIndex )
-      , m_keySize( keySize )
+      : m_key( keyStr )
       , m_keyHash( keyHash )
       , m_value( value )
       {}
@@ -94,26 +109,43 @@ public:
 #if FTL_HAS_RVALUE_REFERENCES
     // [pz 20170315] Do not use outside of this class; will become private
     Entry(
-      size_t keyIndex,
-      size_t keySize,
-      size_t keyHash,
+      StrRef keyStr,
+      IndTy keyHash,
       ValueTy &&value
       )
-      : m_keyIndex( keyIndex )
-      , m_keySize( keySize )
+      : m_key( keyStr )
+      , m_keyHash( keyHash )
+      , m_value( std::move( value ) )
+      {}
+
+    // [pz 20170315] Do not use outside of this class; will become private
+    Entry(
+      SmallString<16> &&key,
+      IndTy keyHash,
+      ValueTy const &value
+      )
+      : m_key( std::move( key ) )
+      , m_keyHash( keyHash )
+      , m_value( value )
+      {}
+
+    // [pz 20170315] Do not use outside of this class; will become private
+    Entry(
+      SmallString<16> &&key,
+      IndTy keyHash,
+      ValueTy &&value
+      )
+      : m_key( std::move( key ) )
       , m_keyHash( keyHash )
       , m_value( std::move( value ) )
       {}
 #endif
 
-    bool isValid() const
-      { return m_keyIndex != ~size_t(0); }
-
-    size_t keyHash() const
+    IndTy keyHash() const
       { return m_keyHash; }
 
-    CStrRef key( OrderedStringMap const &map ) const
-      { return CStrRef( map.m_keys.data() + m_keyIndex, m_keySize ); }
+    CStrRef key() const
+      { return m_key; }
 
     ValueTy const &value() const
       { return m_value; }
@@ -121,9 +153,10 @@ public:
     ValueTy &value()
       { return m_value; }
 
-    size_t m_keyIndex;
-    size_t m_keySize;
-    size_t m_keyHash;
+  private:
+
+    SmallString<16> m_key;
+    IndTy m_keyHash;
     ValueTy m_value;
   };
 
@@ -135,13 +168,13 @@ public:
   bool empty() const
     { return m_entries.empty(); }
 
-  size_t size() const
+  IndTy size() const
     { return m_entries.size(); }
 
-  ValueTy const &operator[]( size_t index ) const
+  ValueTy const &operator[]( IndTy index ) const
     { return m_entries[index].value(); }
 
-  ValueTy &operator[]( size_t index )
+  ValueTy &operator[]( IndTy index )
     { return m_entries[index].value(); }
 
   typedef typename EntryVec::iterator iterator;
@@ -178,7 +211,7 @@ public:
       return m_entries.end();
   }
 
-  size_t count( StrRef key ) const
+  IndTy count( StrRef key ) const
   {
     const_iterator it = find( key );
     if ( it != begin() )
@@ -192,10 +225,9 @@ public:
 
   void clear()
   {
-    m_keys.clear();
     if ( !m_buckets.empty() )
     {
-      m_buckets.resize( size_t(1) << MinBucketCountLog2 );
+      m_buckets.resize( IndTy(1) << MinBucketCountLog2 );
       for ( typename BucketVec::iterator it = m_buckets.begin();
         it != m_buckets.end(); ++it )
         it->makeUnused();
@@ -205,35 +237,28 @@ public:
 
   bool insert( StrRef key, ValueTy const &value )
   {
+    if ( m_entries.size() == (~IndTy(0) / 2) )
+      throw OrderStringMapFullException();
+
     if ( m_entries.size() + 1 >= m_buckets.size() / 2 )
     {
-      m_keys.reserve( 2 * m_keys.size() );
-
-      BucketVec newBuckets;
-      newBuckets.resize(
-        std::max( 2 * m_buckets.size(), size_t(1) << MinBucketCountLog2 )
+      rehash(
+        std::max(
+          2 * IndTy( m_buckets.size() ),
+          IndTy(1) << MinBucketCountLog2
+          )
         );
-      if ( !m_entries.empty() )
-        rehashTo( newBuckets );
-      m_buckets.swap( newBuckets );
 
       m_entries.reserve( 2 * m_entries.size() );
     }
 
-    const size_t keyHash = key.hash();
+    const IndTy keyHash = key.hash();
     Bucket &bucket = findBucket( key, keyHash );
     if ( bucket.isUsed() )
       return false;
 
-    size_t keyIndex = m_keys.size();
-    size_t keySize = key.size();
-    m_keys.resize( keyIndex + keySize + 1 );
-    char *keyData = m_keys.data() + keyIndex;
-    memcpy( keyData, key.data(), keySize );
-    keyData[keySize] = 0;
-
-    size_t entryIndex = m_entries.size();
-    m_entries.push_back( Entry( keyIndex, keySize, keyHash, value ) );
+    IndTy entryIndex = m_entries.size();
+    m_entries.push_back( Entry( key, keyHash, value ) );
 
     bucket.entryIndex = entryIndex;
 
@@ -244,23 +269,24 @@ private:
 
   // Always returns a hash bucket index.  If the resulting bucket.isUsed(),
   // the key matches; otherwise, the entry is empty.
-  size_t findBucketIndex(
+  IndTy findBucketIndex(
     StrRef key,
-    size_t keyHash
+    IndTy keyHash
     ) const
   {
-    const size_t bucketsSize = m_buckets.size();
-    const size_t bucketsMask = bucketsSize - 1;
+    const IndTy bucketsSize = m_buckets.size();
+    const IndTy bucketsMask = bucketsSize - 1;
 
-    size_t bucketIndex = keyHash & bucketsMask;
-    size_t i = 0;
+    IndTy bucketIndex = keyHash & bucketsMask;
+    IndTy i = 0;
     for (;;)
     {
       Bucket const &bucket = m_buckets[bucketIndex];
       if ( !bucket.isUsed() )
         return bucketIndex;
       Entry const &entry = m_entries[bucket.entryIndex];
-      if ( entry.key( *this ) == key )
+      if ( entry.keyHash() == keyHash
+        && entry.key() == key )
         return bucketIndex;
 
       bucketIndex = ( bucketIndex + (++i) ) & bucketsMask;
@@ -269,52 +295,57 @@ private:
 
   Bucket const &findBucket(
     StrRef key,
-    size_t keyHash
+    IndTy keyHash
     ) const
   {
-    size_t bucketIndex = findBucketIndex( key, keyHash );
+    IndTy bucketIndex = findBucketIndex( key, keyHash );
     assert( bucketIndex < m_buckets.size() );
     return m_buckets[bucketIndex];
   }
 
   Bucket &findBucket(
     StrRef key,
-    size_t keyHash
+    IndTy keyHash
     )
   {
-    size_t bucketIndex = findBucketIndex( key, keyHash );
+    IndTy bucketIndex = findBucketIndex( key, keyHash );
     assert( bucketIndex < m_buckets.size() );
     return m_buckets[bucketIndex];
   }
 
-  void rehashTo( std::vector<Bucket> &newBuckets )
+  void rehash( IndTy bucketsSize )
   {
-    size_t newBucketsSize = newBuckets.size();
-    size_t newBucketsMask = newBucketsSize - 1;
-
-    for ( typename BucketVec::const_iterator it = m_buckets.begin();
-      it != m_buckets.end(); ++it )
+    if ( IndTy( m_buckets.size() ) != bucketsSize )
     {
-      Bucket const &oldBucket = *it;
-      if ( !oldBucket.isUsed() )
-        continue;
+      IndTy bucketsMask = bucketsSize - 1;
+      assert( ( bucketsSize & bucketsMask ) == 0 );
 
-      Entry const &entry = m_entries[oldBucket.entryIndex];
+      for ( typename BucketVec::iterator it = m_buckets.begin();
+        it != m_buckets.end(); ++it )
+        it->makeUnused();
+      m_buckets.resize( bucketsSize );
 
-      size_t newBucketIndex = entry.keyHash() & newBucketsMask;
-      size_t i = 0;
-      for (;;)
+      for ( typename EntryVec::const_iterator it = m_entries.begin();
+        it != m_entries.end(); ++it )
       {
-        Bucket const &newBucket = newBuckets[newBucketIndex];
-        if ( !newBucket.isUsed() )
-          break;
-        newBucketIndex = ( newBucketIndex + (++i) ) & newBucketsMask;
+        Entry const &entry = *it;
+
+        IndTy bucketIndex = entry.keyHash() & bucketsMask;
+        IndTy i = 0;
+        for (;;)
+        {
+          Bucket &bucket = m_buckets[bucketIndex];
+          if ( !bucket.isUsed() )
+          {
+            bucket.entryIndex = it - m_entries.begin();
+            break;
+          }
+          bucketIndex = ( bucketIndex + (++i) ) & bucketsMask;
+        }
       }
-      newBuckets[newBucketIndex] = oldBucket;
     }
   }
 
-  std::vector<char> m_keys;
   BucketVec m_buckets;
   EntryVec m_entries;
 };

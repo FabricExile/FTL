@@ -707,7 +707,7 @@ protected:
     JSONObjectEnc<std::string> objectEnc( enc );
     for ( Map::const_iterator it = m_map.begin(); it != m_map.end(); ++it )
     {
-      StrRef key = it->key( m_map );
+      StrRef key = it->key();
       JSONValue const *value = it->value();
       JSONEnc<std::string> memberEnc( objectEnc, key );
       value->encodeTo( memberEnc );
