@@ -2,7 +2,7 @@
 
 all : decode testSmallString
 
-decode : decode.cpp Makefile ../../../FTL/OrderedStringMap.h ../../../FTL/JSONValue.h ../../../FTL/SmallString.h
+decode : decode.cpp Makefile ../../../FTL/OrderedStringMap.h ../../../FTL/JSONValue.h ../../../FTL/SmallString.h ../../../FTL/JSONDec.h
 	g++ -o $@ decode.cpp -I../../.. -O2 -g -std=c++03 -stdlib=libstdc++
 
 testSmallString : testSmallString.cpp Makefile ../../../FTL/SmallString.h

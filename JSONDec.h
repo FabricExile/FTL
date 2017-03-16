@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <math.h>
 #include <stdint.h>
 
 FTL_NAMESPACE_BEGIN
@@ -962,10 +963,57 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
           memcpy( buf, ent->rawJSONStr.data(), length );
           buf[length] = '\0';
 
-          char const *oldlocale = setlocale( LC_NUMERIC, "C" );
-          ent->value.float64 = atof( buf );
-          if ( oldlocale )
-            setlocale( LC_NUMERIC, oldlocale );
+          // [pz 20170315] One of the answers on
+          // http://stackoverflow.com/questions/4392665/converting-string-to-float-without-atof-in-c
+          char *s = buf;
+          double rez = 0, fact = 1;
+          if ( *s == '-' )
+          {
+            s++;
+            fact = -1;
+          }
+          for ( int point_seen = 0; *s; s++ )
+          {
+            if ( *s == 'e' || *s == 'E' )
+            {
+              ++s;
+              break;
+            }
+
+            if ( *s == '.' )
+            {
+              point_seen = 1; 
+              continue;
+            }
+
+            int d = *s - '0';
+            if ( d >= 0 && d <= 9 )
+            {
+              if ( point_seen )
+                fact /= 10.0;
+              rez = rez * 10.0 + (double)d;
+            }
+          }
+          ent->value.float64 = rez * fact;
+          bool neg_exp = false;
+          if ( *s == '-' )
+          {
+            neg_exp = true;
+            ++s;
+          }
+          int exp = 0;
+          for ( ; *s; s++ )
+          {
+            int d = *s - '\0';
+            if ( d >= 0 && d <= 9 )
+              exp = 10 * exp + d;
+          }
+          if ( exp != 0 )
+          {
+            if ( neg_exp )
+              exp = -exp;
+            ent->value.float64 *= pow( 10.0, exp );
+          }
         }
       }
       
