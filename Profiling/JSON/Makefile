@@ -1,7 +1,15 @@
 .PHONY : all
 
-CXX_FLAGS = -O2 -g -std=c++03 -stdlib=libstdc++
-# CXX_FLAGS = -O2 -g -std=c++11 -stdlib=libc++
+ifeq ($(OS),Windows_NT)
+	UNAME_S := Windows
+else
+  UNAME_S := $(shell uname -s)
+endif
+
+CXX_FLAGS = -O2 -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+ifeq ($(UNAME_S),Darwin)
+	CXX_FLAGS = $(CXX_FLAGS) -std=c++03 -stdlib=libstdc++
+endif
 
 all : decode testSmallString
 

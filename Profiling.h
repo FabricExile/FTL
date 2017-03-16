@@ -257,8 +257,8 @@ public:
       }
       else
       {
-        entries[it->second].m_seconds += m_profilingInfos[i].getSeconds();
-        entries[it->second].m_invocations++;
+        entries[it->value()].m_seconds += m_profilingInfos[i].getSeconds();
+        entries[it->value()].m_invocations++;
       }
     }
 
