@@ -35,7 +35,8 @@ public:
 template<
   typename ValueTy,
   unsigned MinBucketCountLog2 = 6,
-  typename IndTy = uint32_t
+  typename IndTy = uint32_t,
+  unsigned SmallStringSize = 12
   >
 class OrderedStringMap
 {
@@ -56,6 +57,8 @@ class OrderedStringMap
       { entryIndex = ~IndTy(0); }
   };
   typedef std::vector<Bucket> BucketVec;
+
+  typedef SmallString<SmallStringSize, IndTy> KeyTy;
 
 public:
 
@@ -155,7 +158,7 @@ public:
 
   private:
 
-    SmallString<16> m_key;
+    KeyTy m_key;
     IndTy m_keyHash;
     ValueTy m_value;
   };

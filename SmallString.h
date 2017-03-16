@@ -11,7 +11,10 @@
 
 FTL_NAMESPACE_BEGIN
 
-template<size_t SmallSize = 16>
+template<
+  unsigned SmallSize,
+  typename IndTy = size_t
+  >
 class SmallString
 {
 public:
@@ -33,8 +36,8 @@ public:
 
   SmallString &operator=( SmallString const &that )
   {
-    size_t oldSize = m_size;
-    size_t newSize = that.m_size;
+    IndTy oldSize = m_size;
+    IndTy newSize = that.m_size;
     if ( oldSize < SmallSize )
     {
       if ( newSize < SmallSize )
@@ -110,7 +113,7 @@ public:
       delete [] m_large.m_data;
   }
 
-  size_t size() const
+  IndTy size() const
     { return m_size; }
 
   bool empty() const
@@ -138,13 +141,13 @@ public:
   operator CStrRef() const
     { return cstr(); }
 
-  char operator[]( size_t index ) const
+  char operator[]( IndTy index ) const
   {
     assert( index < size() );
     return mutableData()[index];
   }
 
-  char &operator[]( size_t index )
+  char &operator[]( IndTy index )
   {
     assert( index < size() );
     return mutableData()[index];
@@ -157,9 +160,9 @@ public:
     m_size = 0;
   }
 
-  void resize( size_t newSize )
+  void resize( IndTy newSize )
   {
-    size_t oldSize = m_size;
+    IndTy oldSize = m_size;
     if ( newSize < SmallSize )
     {
       if ( oldSize >= SmallSize )
@@ -172,7 +175,7 @@ public:
     {
       if ( newSize >= SmallSize )
       {
-        size_t alloc = ( newSize * 3 + 1 ) / 2;
+        IndTy alloc = ( newSize * 3 + 1 ) / 2;
         char *data = new char[alloc + 1];
         memcpy( data, m_small.m_data, oldSize );
         m_large.m_alloc = alloc;
@@ -181,7 +184,7 @@ public:
     }
     else if ( m_large.m_alloc < newSize )
     {
-      size_t oldAlloc = m_large.m_alloc;
+      IndTy oldAlloc = m_large.m_alloc;
       m_large.m_alloc = newSize;
       char *oldData = m_large.m_data;
       m_large.m_data = new char[newSize + 1];
@@ -193,7 +196,7 @@ public:
 
   void push_back( char ch )
   {
-    size_t oldSize = size();
+    IndTy oldSize = size();
     resize( oldSize + 1 );
     mutableData()[oldSize] = ch;
   }
@@ -206,10 +209,10 @@ public:
 
   void append( StrRef str )
   {
-    size_t strSize = str.size();
+    IndTy strSize = str.size();
     if ( strSize > 0 )
     {
-      size_t oldSize = size();
+      IndTy oldSize = size();
       resize( oldSize + strSize );
       memcpy( mutableData() + oldSize, str.data(), strSize );
     }
@@ -227,8 +230,8 @@ public:
     {
       if ( that.m_size < SmallSize )
       {
-        size_t maxSize = std::max( m_size, that.m_size );
-        for ( size_t i = 0; i < maxSize; ++i )
+        IndTy maxSize = std::max( m_size, that.m_size );
+        for ( IndTy i = 0; i < maxSize; ++i )
         {
           if ( i < m_size )
           {
@@ -246,7 +249,7 @@ public:
       }
       else
       {
-        size_t thatAlloc = that.m_large.m_alloc;
+        IndTy thatAlloc = that.m_large.m_alloc;
         char *thatData = that.m_large.m_data;
         memcpy( that.m_small.m_data, m_small.m_data, m_size );
         m_large.m_alloc = thatAlloc;
@@ -257,7 +260,7 @@ public:
     {
       if ( that.m_size < SmallSize )
       {
-        size_t alloc = m_large.m_alloc;
+        IndTy alloc = m_large.m_alloc;
         char *data = m_large.m_data;
         memcpy( m_small.m_data, that.m_small.m_data, that.m_size );
         that.m_large.m_alloc = alloc;
@@ -282,7 +285,7 @@ private:
       return m_large.m_data;
   }
 
-  size_t m_size;
+  IndTy m_size;
   union
   {
     mutable struct
@@ -291,7 +294,7 @@ private:
     } m_small;
     mutable struct
     {
-      size_t m_alloc;
+      IndTy m_alloc;
       char *m_data;
     } m_large;
   };
@@ -299,10 +302,13 @@ private:
 
 FTL_NAMESPACE_END
 
-template<size_t SmallSize>
+template<
+  unsigned SmallSize,
+  typename IndTy
+  >
 std::ostream &operator<<(
   std::ostream &os,
-  FTL::SmallString<SmallSize> const &ss
+  FTL::SmallString<SmallSize, IndTy> const &ss
   )
 {
   return operator<<( os, ss.str() );
