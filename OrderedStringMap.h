@@ -207,6 +207,8 @@ public:
   {
     if ( m_entries.size() + 1 >= m_buckets.size() / 2 )
     {
+      m_keys.reserve( 2 * m_keys.size() );
+
       BucketVec newBuckets;
       newBuckets.resize(
         std::max( 2 * m_buckets.size(), size_t(1) << MinBucketCountLog2 )
@@ -214,6 +216,8 @@ public:
       if ( !m_entries.empty() )
         rehashTo( newBuckets );
       m_buckets.swap( newBuckets );
+
+      m_entries.reserve( 2 * m_entries.size() );
     }
 
     const size_t keyHash = key.hash();
