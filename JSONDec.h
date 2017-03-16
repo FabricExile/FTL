@@ -875,7 +875,7 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
           throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("expected decimal digit") );
       }
 
-      int32_t whole;
+      int64_t whole;
       switch ( ds.front() )
       {
         case '0':
@@ -895,7 +895,10 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
           ds.drop();
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            int64_t oldWhole = whole;
             whole = 10 * whole + (ds.front() - '0');
+            if ( whole < oldWhole )
+              throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("integer out-of-range") );
             ds.drop();
           }
           break;
@@ -910,8 +913,10 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
         {
           if ( mantIsNeg )
             whole = -whole;
+          if ( whole < INT32_MIN || whole > INT32_MAX )
+            throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("integer out-of-range") );
           ent->type = JSONEnt::Type_Int32;
-          ent->value.int32 = whole;
+          ent->value.int32 = int32_t( whole );
         }
       }
       else
@@ -931,13 +936,13 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
             frac = 10 * frac + (ds.front() - '0');
-            --fracExp;
             ds.drop();
+            --fracExp;
           }
         }
 
         double mant = double(whole) + double(frac) * pow( 10.0, fracExp );
-        int32_t exp = 0;
+        int16_t exp = 0;
         if ( !ds.empty() && (ds.front() == 'e' || ds.front() == 'E') )
         {
           ds.drop();
@@ -957,7 +962,10 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
           ds.drop();
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            int16_t oldExp = exp;
             exp = 10 * exp + (ds.front() - '0');
+            if ( exp < oldExp )
+              throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("exponent out-of-range") );
             ds.drop();
           }
 
