@@ -256,7 +256,7 @@ public:
   }
 
 #if FTL_HAS_RVALUE_REFERENCES
-  bool insert( Key &&key, ValueTy const &value )
+  bool insert( KeyTy &&key, ValueTy const &value )
   {
     prepareForInsert();
 
@@ -290,7 +290,7 @@ public:
     return true;
   }
 
-  bool insert( Key &&key, ValueTy &&value )
+  bool insert( KeyTy &&key, ValueTy &&value )
   {
     prepareForInsert();
 

@@ -73,8 +73,8 @@ public:
       memcpy( m_small.m_data, that.m_small.m_data, m_size );
     else
     {
-      m_large.m_alloc = that.m_alloc;
-      m_large.m_data = that.m_data;
+      m_large.m_alloc = that.m_large.m_alloc;
+      m_large.m_data = that.m_large.m_data;
       that.m_size = 0;
     }
   }
@@ -89,8 +89,8 @@ public:
       memcpy( m_small.m_data, that.m_small.m_data, m_size );
     else
     {
-      m_large.m_alloc = that.m_alloc;
-      m_large.m_data = that.m_data;
+      m_large.m_alloc = that.m_large.m_alloc;
+      m_large.m_data = that.m_large.m_data;
       that.m_size = 0;
     }
   }
@@ -184,7 +184,6 @@ public:
     }
     else if ( m_large.m_alloc < newSize )
     {
-      IndTy oldAlloc = m_large.m_alloc;
       m_large.m_alloc = newSize;
       char *oldData = m_large.m_data;
       m_large.m_data = new char[newSize + 1];
@@ -274,6 +273,9 @@ public:
     }
     std::swap( m_size, that.m_size );
   }
+
+  size_t hash() const
+    { return str().hash(); }
 
 private:
 
