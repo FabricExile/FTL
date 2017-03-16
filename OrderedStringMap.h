@@ -190,11 +190,13 @@ public:
 
   iterator find( StrRef key )
   {
-    Bucket const &bucket = findBucket( key, key.hash() );
-    if ( bucket.isUsed() )
-      return m_entries.begin() + bucket.entryIndex;
-    else
-      return m_entries.end();
+    if ( !m_buckets.empty() )
+    {
+      Bucket const &bucket = findBucket( key, key.hash() );
+      if ( bucket.isUsed() )
+        return m_entries.begin() + bucket.entryIndex;
+    }
+    return m_entries.end();
   }
 
   typedef typename EntryVec::const_iterator const_iterator;
@@ -207,11 +209,13 @@ public:
 
   const_iterator find( StrRef key ) const
   {
-    Bucket const &bucket = findBucket( key, key.hash() );
-    if ( bucket.isUsed() )
-      return m_entries.begin() + bucket.entryIndex;
-    else
-      return m_entries.end();
+    if ( !m_buckets.empty() )
+    {
+      Bucket const &bucket = findBucket( key, key.hash() );
+      if ( bucket.isUsed() )
+        return m_entries.begin() + bucket.entryIndex;
+    }
+    return m_entries.end();
   }
 
   IndTy count( StrRef key ) const
@@ -337,6 +341,8 @@ private:
     IndTy keyHash
     ) const
   {
+    assert( !m_buckets.empty() );
+
     const IndTy bucketsSize = m_buckets.size();
     const IndTy bucketsMask = bucketsSize - 1;
 
