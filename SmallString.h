@@ -37,26 +37,26 @@ public:
   SmallString &operator=( SmallString const &that )
   {
     IndTy oldSize = m_size;
-    IndTy newSize = that.m_size;
+    m_size = that.m_size;
     if ( oldSize < SmallSize )
     {
-      if ( newSize < SmallSize )
+      if ( m_size < SmallSize )
         ; // nothing
       else
       {
-        m_large.m_alloc = newSize;
-        m_large.m_data = new char[newSize + 1];
+        m_large.m_alloc = m_size;
+        m_large.m_data = new char[m_size + 1];
       }
     }
     else // oldSize >= SmallSize
     {
-      if ( newSize < SmallSize )
+      if ( m_size < SmallSize )
         delete [] m_large.m_data;
-      else if ( m_large.m_alloc < newSize )
+      else if ( m_large.m_alloc < m_size )
       {
         delete [] m_large.m_data;
-        m_large.m_alloc = newSize;
-        m_large.m_data = new char[newSize + 1];
+        m_large.m_alloc = m_size;
+        m_large.m_data = new char[m_size + 1];
       }
     }
 

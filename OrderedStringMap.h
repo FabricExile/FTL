@@ -181,6 +181,7 @@ public:
     { return m_entries[index].value(); }
 
   typedef typename EntryVec::iterator iterator;
+  typedef iterator IT;
 
   iterator begin()
     { return m_entries.begin(); }
@@ -200,6 +201,7 @@ public:
   }
 
   typedef typename EntryVec::const_iterator const_iterator;
+  typedef const_iterator CIT;
 
   const_iterator begin() const
     { return m_entries.begin(); }
@@ -242,66 +244,68 @@ public:
     m_entries.clear();
   }
 
-  bool insert( StrRef key, ValueTy const &value )
+  typedef std::pair<iterator, bool> InsertResultTy;
+
+  InsertResultTy insert( StrRef key, ValueTy const &value )
   {
     prepareForInsert();
 
     const IndTy keyHash = key.hash();
     Bucket &bucket = findBucket( key, keyHash );
     if ( bucket.isUsed() )
-      return false;
+      return InsertResultTy( end(), false );
 
     IndTy entryIndex = m_entries.size();
     m_entries.push_back( Entry( key, keyHash, value ) );
 
     bucket.entryIndex = entryIndex;
 
-    return true;
+    return InsertResultTy( m_entries.begin() + entryIndex, true );
   }
 
 #if FTL_HAS_RVALUE_REFERENCES
-  bool insert( KeyTy &&key, ValueTy const &value )
+  InsertResultTy insert( KeyTy &&key, ValueTy const &value )
   {
     prepareForInsert();
 
     const IndTy keyHash = key.hash();
     Bucket &bucket = findBucket( key, keyHash );
     if ( bucket.isUsed() )
-      return false;
+      return InsertResultTy( end(), false );
 
     IndTy entryIndex = m_entries.size();
     m_entries.push_back( Entry( std::move( key ), keyHash, value ) );
 
     bucket.entryIndex = entryIndex;
 
-    return true;
+    return InsertResultTy( m_entries.begin() + entryIndex, true );
   }
 
-  bool insert( StrRef key, ValueTy &&value )
+  InsertResultTy insert( StrRef key, ValueTy &&value )
   {
     prepareForInsert();
 
     const IndTy keyHash = key.hash();
     Bucket &bucket = findBucket( key, keyHash );
     if ( bucket.isUsed() )
-      return false;
+      return InsertResultTy( end(), false );
 
     IndTy entryIndex = m_entries.size();
     m_entries.push_back( Entry( key, keyHash, std::move( value ) ) );
 
     bucket.entryIndex = entryIndex;
 
-    return true;
+    return InsertResultTy( m_entries.begin() + entryIndex, true );
   }
 
-  bool insert( KeyTy &&key, ValueTy &&value )
+  InsertResultTy insert( KeyTy &&key, ValueTy &&value )
   {
     prepareForInsert();
 
     const IndTy keyHash = key.hash();
     Bucket &bucket = findBucket( key, keyHash );
     if ( bucket.isUsed() )
-      return false;
+      return InsertResultTy( end(), false );
 
     IndTy entryIndex = m_entries.size();
     m_entries.push_back(
@@ -310,9 +314,21 @@ public:
 
     bucket.entryIndex = entryIndex;
 
-    return true;
+    return InsertResultTy( m_entries.begin() + entryIndex, true );
   }
 #endif
+
+  ValueTy &operator[]( StrRef key )
+  {
+    iterator it = find( key );
+    if ( it == end() )
+    {
+      InsertResultTy insertResult = insert( key, ValueTy() );
+      assert( insertResult.second );
+      it = insertResult.first;
+    }
+    return it->value();
+  }
 
 private:
 

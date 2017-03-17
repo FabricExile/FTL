@@ -546,13 +546,13 @@ public:
 
   bool insert( StrRef key, JSONValue *value )
   {
-    return m_map.insert( key, value );
+    return m_map.insert( key, value ).second;
   }
 
 #if FTL_HAS_RVALUE_REFERENCES
   bool insert( KeyTy &&key, JSONValue *value )
   {
-    return m_map.insert( std::move( key ), value );
+    return m_map.insert( std::move( key ), value ).second;
   }
 #endif
 
