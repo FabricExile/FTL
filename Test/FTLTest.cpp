@@ -184,6 +184,11 @@ int main( int argc, char **argv )
   // sleep( 20 );
   // sleep( 5 );
 
+  // [pz 20170317] On some platforms there are new/delete operations which
+  // happen before main is called.  We don't care about these, so just
+  // pretend they never happened.
+  allocatedPtrCount = 0;
+
   dumpAllocatedPtrs();
   testSmallString();
   dumpAllocatedPtrs();
