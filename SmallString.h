@@ -209,8 +209,7 @@ public:
 
   void append( StrRef str )
   {
-    IndTy strSize = str.size();
-    if ( strSize > 0 )
+    if ( IndTy strSize = str.size() )
     {
       IndTy oldSize = size();
       resize( oldSize + strSize );
@@ -240,11 +239,7 @@ public:
             else
               that.m_small.m_data[i] = m_small.m_data[i];
           }
-          else
-          {
-            if ( i < that.m_size )
-              m_small.m_data[i] = that.m_small.m_data[i];
-          }
+          else m_small.m_data[i] = that.m_small.m_data[i];
         }
       }
       else
