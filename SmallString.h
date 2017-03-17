@@ -93,6 +93,8 @@ public:
       m_large.m_data = that.m_large.m_data;
       that.m_size = 0;
     }
+
+    return *this;
   }
 #endif
 
