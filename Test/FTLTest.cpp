@@ -8,7 +8,9 @@
 #include <exception>
 #include <iostream>
 #include <map>
-#include <stdlib.h>
+#ifdef FTL_PLATFORM_WINDOWS
+# include <windows.h>
+#endif
 
 bool trackAllocatedPointers = false;
 static const size_t maxAllocatedPtrs = 4096;
@@ -188,10 +190,21 @@ void testOrderedStringMap()
 
 int main( int argc, char **argv )
 {
-  // sleep( 20 );
-  // sleep( 5 );
+// #ifdef FTL_PLATFORM_WINDOWS
+//   Sleep( 20 * 1000 );
+//   Sleep( 5 * 1000 );
+// #else
+//   sleep( 20 );
+//   sleep( 5 );
+// #endif
 
+  // [pz 20170317] We can't track allocated pointers on Windows because
+  // the std::cout stuff seems to allocate buffers behind the scenes.  There
+  // might be a way to "reserve" a buffer before turning this on so we don't
+  // see this...
+#ifndef FTL_PLATFORM_WINDOWS
   trackAllocatedPointers = true;
+#endif
 
   dumpAllocatedPtrs();
   testSmallString();
@@ -199,5 +212,7 @@ int main( int argc, char **argv )
   testOrderedStringMap();
   dumpAllocatedPtrs();
 
+#ifndef FTL_PLATFORM_WINDOWS
   trackAllocatedPointers = false;
+#endif
 }

@@ -10,7 +10,16 @@ env.Append(
   CPPPATH = [env.Dir('#')],
   CPPDEFINES = ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS'],
   )
-if env['FABRIC_BUILD_OS'] != 'Windows':
+if env['FABRIC_BUILD_OS'] == 'Windows':
+  if env['FABRIC_BUILD_TYPE'] == 'Release':
+    env.Append(
+      CXXFLAGS = ['/Ox'],
+      )
+  if env['FABRIC_BUILD_TYPE'] == 'Debug':
+    env.Append(
+      CXXFLAGS = ['/Od'],
+      )
+else:
   env.Append(
     CXXFLAGS = ['-std=c++11'],
     )
@@ -22,7 +31,9 @@ if env['FABRIC_BUILD_OS'] == 'Darwin':
 
 ftlTestDeps = env.Glob('#/*.hpp')
 
-ftlTestProgram = env.Program('FTLTest', env.File('FTLTest.cpp'))
+ftlTestEnv = env.Clone()
+ftlTestEnv['PDB'] = "FTLTest.pdb"
+ftlTestProgram = ftlTestEnv.Program('FTLTest', ftlTestEnv.File('FTLTest.cpp'))
 env.Depends(ftlTestProgram, ftlTestDeps)
 
 def ftlTestEmitter(target, source, env):
