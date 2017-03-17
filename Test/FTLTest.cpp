@@ -52,6 +52,17 @@ void dumpAllocatedPtrs()
   std::cout << FTL_STR("AllocatedPtrs: End") << std::endl;
 }
 
+typedef FTL::OrderedStringMap< FTL::OrderedStringMap<int>::KeyTy > OSM;
+
+OSM::KeyTy genString( size_t length )
+{
+  static const size_t Base64CharCount = 64;
+  static const char Base64Chars[Base64CharCount + 1] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  assert( length <= Base64CharCount );
+  return OSM::KeyTy( FTL::StrRef( Base64Chars, length ) );
+}
+
 void testSmallString()
 {
   std::cout << FTL_STR("SmallString: Begin") << std::endl;
@@ -116,10 +127,20 @@ void testSmallString()
   s1 += FTL_STR("TwoToMakeItLong");
   std::cout << FTL_STR("c_str(): ") << s1.c_str() << std::endl;
 
+  for ( size_t i = 0; i < 10; ++i )
+  {
+    s1 += genString(i);
+    std::cout << FTL_STR("s1 += genString(") << i << FTL_STR("): ") << s1 << std::endl;
+  }
+
+  for ( size_t i = 30; i--; )
+  {
+    s1.resize( i );
+    std::cout << FTL_STR("s1.resize(") << i << FTL_STR("): ") << s1 << std::endl;
+  }
+
   std::cout << FTL_STR("SmallString: End") << std::endl;
 }
-
-typedef FTL::OrderedStringMap< FTL::OrderedStringMap<int>::KeyTy > OSM;
 
 void dumpOSM( OSM const &osm )
 {
@@ -127,15 +148,6 @@ void dumpOSM( OSM const &osm )
   for ( OSM::CIT it = osm.begin(); it != osm.end(); ++it )
     std::cout << FTL_STR("    '") << it->key() << FTL_STR("' -> '") << it->value() << FTL_STR("'") << std::endl;
   std::cout << FTL_STR("  DumpOSM: End") << std::endl;
-}
-
-OSM::KeyTy genString( size_t length )
-{
-  static const size_t Base64CharCount = 64;
-  static const char Base64Chars[Base64CharCount + 1] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  assert( length <= Base64CharCount );
-  return OSM::KeyTy( FTL::StrRef( Base64Chars, length ) );
 }
 
 void testOrderedStringMap()

@@ -94,6 +94,46 @@ longOneLongOneLongOneLongOne
 longTwoLongTwoLongTwoLongTwoSomeSuffix
 c_str(): One
 c_str(): OneTwoToMakeItLong
+s1 += genString(0): OneTwoToMakeItLong
+s1 += genString(1): OneTwoToMakeItLongA
+s1 += genString(2): OneTwoToMakeItLongAAB
+s1 += genString(3): OneTwoToMakeItLongAABABC
+s1 += genString(4): OneTwoToMakeItLongAABABCABCD
+s1 += genString(5): OneTwoToMakeItLongAABABCABCDABCDE
+s1 += genString(6): OneTwoToMakeItLongAABABCABCDABCDEABCDEF
+s1 += genString(7): OneTwoToMakeItLongAABABCABCDABCDEABCDEFABCDEFG
+s1 += genString(8): OneTwoToMakeItLongAABABCABCDABCDEABCDEFABCDEFGABCDEFGH
+s1 += genString(9): OneTwoToMakeItLongAABABCABCDABCDEABCDEFABCDEFGABCDEFGHABCDEFGHI
+s1.resize(29): OneTwoToMakeItLongAABABCABCDA
+s1.resize(28): OneTwoToMakeItLongAABABCABCD
+s1.resize(27): OneTwoToMakeItLongAABABCABC
+s1.resize(26): OneTwoToMakeItLongAABABCAB
+s1.resize(25): OneTwoToMakeItLongAABABCA
+s1.resize(24): OneTwoToMakeItLongAABABC
+s1.resize(23): OneTwoToMakeItLongAABAB
+s1.resize(22): OneTwoToMakeItLongAABA
+s1.resize(21): OneTwoToMakeItLongAAB
+s1.resize(20): OneTwoToMakeItLongAA
+s1.resize(19): OneTwoToMakeItLongA
+s1.resize(18): OneTwoToMakeItLong
+s1.resize(17): OneTwoToMakeItLon
+s1.resize(16): OneTwoToMakeItLo
+s1.resize(15): OneTwoToMakeItL
+s1.resize(14): OneTwoToMakeIt
+s1.resize(13): OneTwoToMakeI
+s1.resize(12): OneTwoToMake
+s1.resize(11): OneTwoToMak
+s1.resize(10): OneTwoToMa
+s1.resize(9): OneTwoToM
+s1.resize(8): OneTwoTo
+s1.resize(7): OneTwoT
+s1.resize(6): OneTwo
+s1.resize(5): OneTw
+s1.resize(4): OneT
+s1.resize(3): One
+s1.resize(2): On
+s1.resize(1): O
+s1.resize(0): 
 SmallString: End
 AllocatedPtrs: Begin
 AllocatedPtrs: End

@@ -167,8 +167,9 @@ public:
     {
       if ( oldSize >= SmallSize )
       {
-        memcpy( m_small.m_data, m_large.m_data, newSize );
-        delete [] m_large.m_data;
+        char *data = m_large.m_data;
+        memcpy( m_small.m_data, data, newSize );
+        delete [] data;
       }
     }
     else if ( oldSize < SmallSize )
