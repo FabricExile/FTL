@@ -12,12 +12,12 @@ env.Append(
   )
 if env['FABRIC_BUILD_OS'] != 'Windows':
   env.Append(
-    CXXFLAGS = ['-std=c++03'],
+    CXXFLAGS = ['-std=c++11'],
     )
 if env['FABRIC_BUILD_OS'] == 'Darwin':
   env.Append(
-    CXXFLAGS = ['-stdlib=libstdc++'],
-    LINKFLAGS = ['-stdlib=libstdc++'],
+    CXXFLAGS = ['-stdlib=libc++'],
+    LINKFLAGS = ['-stdlib=libc++'],
     )
 
 ftlTestDeps = env.Glob('#/*.hpp')
