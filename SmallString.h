@@ -185,9 +185,9 @@ public:
     }
     else if ( m_large.m_alloc < newSize )
     {
-      m_large.m_alloc = newSize;
+      m_large.m_alloc = ( newSize * 3 + 1 ) / 2;
       char *oldData = m_large.m_data;
-      m_large.m_data = new char[newSize + 1];
+      m_large.m_data = new char[m_large.m_alloc + 1];
       memcpy( m_large.m_data, oldData, oldSize );
       delete [] oldData;
     }
