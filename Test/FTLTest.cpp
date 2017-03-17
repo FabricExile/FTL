@@ -2,11 +2,8 @@
 
 #include <iostream>
 
-int main( int argc, char **argv )
+void testSmallString()
 {
-  // sleep( 20 );
-  // sleep( 5 );
-
   FTL::SmallString<16> s1, s2;
   std::cout << s1 << std::endl;
 
@@ -66,6 +63,12 @@ int main( int argc, char **argv )
   std::cout << FTL_STR("c_str(): ") << s1.c_str() << std::endl;
   s1 += FTL_STR("TwoToMakeItLong");
   std::cout << FTL_STR("c_str(): ") << s1.c_str() << std::endl;
+}
 
-  return 0;
+int main( int argc, char **argv )
+{
+  // sleep( 20 );
+  // sleep( 5 );
+
+  testSmallString();
 }
