@@ -10,17 +10,21 @@
 #include <map>
 #include <stdlib.h>
 
+bool trackAllocatedPointers = false;
 static const size_t maxAllocatedPtrs = 4096;
 std::pair<void *, size_t> allocatedPtrs[maxAllocatedPtrs];
 size_t allocatedPtrCount = 0;
 
 void *operator new( std::size_t size ) throw(std::bad_alloc)
 {
-  assert( allocatedPtrCount < maxAllocatedPtrs );
   if ( size == 0 )
     throw std::bad_alloc();
   void *ptr = malloc( size );
-  allocatedPtrs[allocatedPtrCount++] = std::pair<void *, size_t>( ptr, size );
+  if ( trackAllocatedPointers )
+  {
+    assert( allocatedPtrCount < maxAllocatedPtrs );
+    allocatedPtrs[allocatedPtrCount++] = std::pair<void *, size_t>( ptr, size );
+  }
   return ptr;
 }
 
@@ -28,17 +32,20 @@ void operator delete( void *ptr ) throw()
 {
   if ( ptr )
   {
-    size_t allocatedPtrIndex = 0;
-    while ( allocatedPtrIndex < allocatedPtrCount )
-      if ( allocatedPtrs[allocatedPtrIndex++].first == ptr )
-        break;
-    assert( allocatedPtrIndex <= allocatedPtrCount );
-    while ( allocatedPtrIndex < allocatedPtrCount )
+    if ( trackAllocatedPointers )
     {
-      allocatedPtrs[allocatedPtrIndex] = allocatedPtrs[allocatedPtrIndex+1];
-      ++allocatedPtrIndex;
+      size_t allocatedPtrIndex = 0;
+      while ( allocatedPtrIndex < allocatedPtrCount )
+        if ( allocatedPtrs[allocatedPtrIndex++].first == ptr )
+          break;
+      assert( allocatedPtrIndex <= allocatedPtrCount );
+      while ( allocatedPtrIndex < allocatedPtrCount )
+      {
+        allocatedPtrs[allocatedPtrIndex] = allocatedPtrs[allocatedPtrIndex+1];
+        ++allocatedPtrIndex;
+      }
+      --allocatedPtrCount;
     }
-    --allocatedPtrCount;
 
     free( ptr );
   }
@@ -184,14 +191,13 @@ int main( int argc, char **argv )
   // sleep( 20 );
   // sleep( 5 );
 
-  // [pz 20170317] On some platforms there are new/delete operations which
-  // happen before main is called.  We don't care about these, so just
-  // pretend they never happened.
-  allocatedPtrCount = 0;
+  trackAllocatedPointers = true;
 
   dumpAllocatedPtrs();
   testSmallString();
   dumpAllocatedPtrs();
   testOrderedStringMap();
   dumpAllocatedPtrs();
+
+  trackAllocatedPointers = false;
 }
