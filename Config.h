@@ -6,18 +6,18 @@
 
 #if defined( __linux__ )
 
-# define FTL_OS_LINUX
-# define FTL_PLATFORM_POSIX
+# define FTL_OS_LINUX 1
+# define FTL_PLATFORM_POSIX 1
 
 #elif defined( __APPLE__ )
 
-# define FTL_OS_DARWIN
-# define FTL_PLATFORM_POSIX
+# define FTL_OS_DARWIN 1
+# define FTL_PLATFORM_POSIX 1
 
 #elif defined( _MSC_VER )
 
-# define FTL_OS_WINDOWS
-# define FTL_PLATFORM_WINDOWS
+# define FTL_OS_WINDOWS 1
+# define FTL_PLATFORM_WINDOWS 1
 
 # if !defined( FTL_INCLUDE_WINDOWS_UI )
 #  define WIN32_LEAN_AND_MEAN   // Avoid unnecessary cruft
@@ -46,15 +46,15 @@ inline float roundf( float x ) { return floorf(x+0.5f); }
 // Build architecture
 #if defined(FTL_PLATFORM_POSIX)
 # if defined(__x86_64)
-#  define FTL_ARCH_64BIT
+#  define FTL_ARCH_64BIT 1
 # else
-#  define FTL_ARCH_32BIT
+#  define FTL_ARCH_32BIT 1
 # endif
 #elif defined(FTL_PLATFORM_WINDOWS)
 # if defined(_WIN64)
-#  define FTL_ARCH_64BIT
+#  define FTL_ARCH_64BIT 1
 # else
-#  define FTL_ARCH_32BIT
+#  define FTL_ARCH_32BIT 1
 # endif
 #else
 # error "Unsupported platform"
@@ -62,9 +62,9 @@ inline float roundf( float x ) { return floorf(x+0.5f); }
 
 // Build settings
 #if defined(NDEBUG)
-# define FTL_BUILD_RELEASE
+# define FTL_BUILD_RELEASE 1
 #else
-# define FTL_BUILD_DEBUG
+# define FTL_BUILD_DEBUG 1
 #endif
 
 #ifndef _MSC_VER

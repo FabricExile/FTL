@@ -6,15 +6,18 @@
 
 #include <FTL/StrRef.h>
 
+#include <exception>
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
 
 FTL_NAMESPACE_BEGIN
 
-class JSONException
+class JSONException : public std::exception
 {
 public:
+
+  virtual ~JSONException() throw() {}
 
   StrRef getDesc() const
     { return m_desc; }
@@ -39,6 +42,9 @@ protected:
       &m_desc[oldSize], 24, "%u", unsigned(value)
       ) );
   }
+
+  virtual char const *what() const throw()
+    { return m_desc.c_str(); }
 
 private:
 

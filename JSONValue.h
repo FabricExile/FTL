@@ -9,6 +9,7 @@
 #include <FTL/JSONEnc.h>
 #include <FTL/OrderedStringMap.h>
 #include <FTL/OwnedPtr.h>
+#include <FTL/SmallString.h>
 
 #include <assert.h>
 
@@ -320,7 +321,7 @@ public:
     : JSONValue( Type_String )
     , m_value( value ) {}
 
-  static JSONString *CreateWithSwap( std::string &value )
+  static JSONString *CreateWithSwap( SmallString<16> &value )
   {
     JSONString *result = new JSONString;
     result->m_value.swap( value );
@@ -343,7 +344,7 @@ protected:
 
 private:
 
-  std::string m_value;
+  SmallString<16> m_value;
 };
 
 inline FTL::CStrRef JSONValue::getStringValue() const
@@ -492,9 +493,11 @@ private:
 
 class JSONObject : public JSONValue
 {
-  typedef OrderedStringMap<JSONValue *> Map;
+  typedef OrderedStringMap<JSONValue *, 3> Map;
 
 public:
+
+  typedef Map::KeyTy KeyTy;
 
   static bool classof( JSONValue const *jsonValue )
     { return jsonValue->getType() == Type_Object; }
@@ -537,25 +540,32 @@ public:
   void clear()
   {
     for ( Map::const_iterator it = m_map.begin(); it != m_map.end(); ++it )
-      delete it->second;
+      delete it->value();
     m_map.clear();
   }
 
   bool insert( StrRef key, JSONValue *value )
   {
-    return m_map.insert( key, value );
+    return m_map.insert( key, value ).second;
   }
+
+#if FTL_HAS_RVALUE_REFERENCES
+  bool insert( KeyTy &&key, JSONValue *value )
+  {
+    return m_map.insert( std::move( key ), value ).second;
+  }
+#endif
 
   JSONValue *maybeGet( StrRef key )
   {
     Map::const_iterator it = find( key );
-    return it != end()? it->second: 0;
+    return it != end()? it->value(): 0;
   }
 
   JSONValue const *maybeGet( StrRef key ) const
   {
     Map::const_iterator it = find( key );
-    return it != end()? it->second: 0;
+    return it != end()? it->value(): 0;
   }
 
   JSONValue *get( StrRef key )
@@ -706,8 +716,8 @@ protected:
     JSONObjectEnc<std::string> objectEnc( enc );
     for ( Map::const_iterator it = m_map.begin(); it != m_map.end(); ++it )
     {
-      StrRef key = it->first;
-      JSONValue const *value = it->second;
+      StrRef key = it->key();
+      JSONValue const *value = it->value();
       JSONEnc<std::string> memberEnc( objectEnc, key );
       value->encodeTo( memberEnc );
     }
@@ -737,7 +747,7 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
 
     case JSONEnt<JSONStrTy>::Type_String:
     {
-      std::string string;
+      SmallString<16> string;
       je.stringAppendTo( string ); 
       return JSONString::CreateWithSwap( string );
     }
@@ -753,19 +763,27 @@ JSONValue *JSONValue::Create( JSONEnt<JSONStrTy> const &je )
       {
         if ( !keyJE.isString() )
           throw JSONInternalErrorException();
-        FTL::StrRef key;
+        JSONValue *value = Create( valueJE );
+        bool insertResult;
+#if !FTL_HAS_RVALUE_REFERENCES
         if ( keyJE.stringIsShort() )
-          key = FTL::StrRef( keyJE.stringShortData(), keyJE.stringLength() );
+        {
+          insertResult = object->insert(
+            keyJE.stringShortStr(),
+            value
+            );
+        }
         else
         {
-          char *longKeyCStr = static_cast<char *>(
-            alloca( keyJE.stringLength() + 1 )
+#endif
+          insertResult = object->insert(
+            keyJE.template stringGetAs<JSONObject::KeyTy>(),
+            value
             );
-          keyJE.stringGetData( longKeyCStr );
-          key = FTL::StrRef( longKeyCStr, keyJE.stringLength() );
+#if !FTL_HAS_RVALUE_REFERENCES
         }
-        JSONValue *value = Create( valueJE );
-        if ( !object->insert( key, value ) )
+#endif
+        if ( !insertResult )
         {
           delete value;
           throw JSONMalformedException(

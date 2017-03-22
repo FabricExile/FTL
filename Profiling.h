@@ -248,7 +248,7 @@ public:
 
           OrderedStringMap< unsigned >::const_iterator parentIt = lookup.find(parentCallstackKey.c_str());
           assert(parentIt != lookup.end());
-          entry.m_parentIndex = parentIt->second;
+          entry.m_parentIndex = parentIt->value();
         }
 
         entry.m_seconds = m_profilingInfos[i].getSeconds();
@@ -257,8 +257,8 @@ public:
       }
       else
       {
-        entries[it->second].m_seconds += m_profilingInfos[i].getSeconds();
-        entries[it->second].m_invocations++;
+        entries[it->value()].m_seconds += m_profilingInfos[i].getSeconds();
+        entries[it->value()].m_invocations++;
       }
     }
 

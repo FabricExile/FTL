@@ -2,21 +2,107 @@
 # Copyright (c) 2010-2017 Fabric Software Inc. All rights reserved.
 #
 
+import os, subprocess
 Import('parentEnv')
 
 env = parentEnv.Clone()
-env.Append(CPPPATH = [env.Dir('#')])
-if env['FABRIC_BUILD_OS'] == 'Darwin':
-  env.Append(CXXFLAGS = ['-std=c++03'])
-  env.Append(CXXFLAGS = ['-stdlib=libstdc++'])
-  env.Append(LINKFLAGS = ['-stdlib=libstdc++'])
-
-ftlTests = SConscript(
-  dirs = [
-    'JSON',
-    'Base64',
-    ],
-  exports={'parentEnv': env}
+env.Append(
+  CPPPATH = [env.Dir('#')],
+  CPPDEFINES = ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS'],
   )
+if env['FABRIC_BUILD_OS'] == 'Windows':
+  if env['FABRIC_BUILD_TYPE'] == 'Release':
+    env.Append(
+      CXXFLAGS = ['/Ox'],
+      )
+  if env['FABRIC_BUILD_TYPE'] == 'Debug':
+    env.Append(
+      CXXFLAGS = ['/Od'],
+      )
+else:
+  env.Append(
+    CXXFLAGS = ['-std=c++11'],
+    )
+if env['FABRIC_BUILD_OS'] == 'Darwin':
+  env.Append(
+    CXXFLAGS = ['-stdlib=libc++'],
+    LINKFLAGS = ['-stdlib=libc++'],
+    )
+
+ftlTestDeps = env.Glob('#/*.hpp')
+
+ftlTestEnv = env.Clone()
+ftlTestEnv['PDB'] = "FTLTest.pdb"
+ftlTestProgram = ftlTestEnv.Program('FTLTest', ftlTestEnv.File('FTLTest.cpp'))
+env.Depends(ftlTestProgram, ftlTestDeps)
+
+def ftlTestEmitter(target, source, env):
+  outputBase = source[0].srcnode().abspath[:-4]
+  outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], env['FABRIC_BUILD_ARCH'], 'out'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, env['FABRIC_BUILD_OS'], 'out'])
+  if not os.path.exists(outputFile):
+    outputFile = '.'.join([outputBase, 'out'])
+  if not os.path.exists(outputFile):
+    raise Exception("Unable to find output for " + source[0].abspath)
+  source.append(outputFile)
+  source.append(ftlTestProgram)
+  return target, source
+
+def ftlTestCallback(target, source, env):
+  ftlDir = os.path.dirname(source[0].srcnode().abspath)
+  ftlFile = os.path.basename(source[0].abspath)
+  
+  try:
+    with open(target[0].abspath, 'w') as stdout:
+      with open(os.devnull, 'w') as stderr:
+        subprocess.call(
+          [str(ftlTestProgram[0])],
+          stdout = stdout,
+          stderr = stderr,
+          shell = False
+          )
+  except Exception as e:
+    print "Caught exception: %s" % e
+  
+  with open(source[1].abspath, 'r') as expectedFile:
+    expectedContents = expectedFile.read()
+  
+  with open(target[0].abspath, 'r') as actualFile:
+    actualContents = actualFile.read()
+  
+  if expectedContents != actualContents:
+    print "FAIL " + ftlFile
+    subprocess.call(
+      ['diff', '-u', source[1].abspath, target[0].abspath]
+    )
+    return 1
+  else:
+    print "PASS " + ftlFile
+    return None
+
+ftlTestAction = env.Action(ftlTestCallback, None)
+env.Append(BUILDERS = {
+  "FTLTest": Builder(
+    action = ftlTestAction,
+    suffix = '.test-result',
+    src_suffix = '.cpp',
+    emitter = ftlTestEmitter
+    )
+  })
+
+ftlTest = env.AlwaysBuild(env.NoCache(env.FTLTest("FTLTest.cpp")))
+Alias('test-ftl-main', ftlTest)
+
+ftlTests = [
+  ftlTest,
+  SConscript(
+    dirs = [
+      'JSON',
+      'Base64',
+      ],
+    exports={'parentEnv': env}
+    )
+  ]
 Alias('test-ftl', ftlTests)
 Export('ftlTests')

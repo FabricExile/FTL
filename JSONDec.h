@@ -10,6 +10,8 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <limits.h>
+#include <math.h>
 #include <stdint.h>
 
 FTL_NAMESPACE_BEGIN
@@ -281,6 +283,9 @@ public:
     return value.string.shortData;
   }
 
+  StrRef stringShortStr() const
+    { return StrRef( stringShortData(), stringLength() ); }
+
   void stringGetData( char *data ) const
   {
     assert( isString() );
@@ -317,6 +322,14 @@ public:
       string.resize( newSize );
       stringGetData( &string[oldSize] );
     }
+  }
+
+  template<typename StringTy>
+  StringTy stringGetAs() const
+  {
+    StringTy string;
+    stringAppendTo( string );
+    return string;
   }
 
   // Object
@@ -865,16 +878,20 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       if ( ent )
         ent->rawJSONStr = ds;
 
+      bool mantIsNeg = 0;
       if ( !ds.empty() && ds.front() == '-' )
       {
+        mantIsNeg = true;
         ds.drop();
         if ( ds.empty() )
           throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("expected decimal digit") );
       }
 
+      int64_t whole;
       switch ( ds.front() )
       {
         case '0':
+          whole = 0;
           ds.drop();
           break;
         case '1':
@@ -886,9 +903,14 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
         case '7':
         case '8':
         case '9':
+          whole = ds.front() - '0';
           ds.drop();
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            int64_t oldWhole = whole;
+            whole = 10 * whole + (ds.front() - '0');
+            if ( whole < oldWhole )
+              throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("integer out-of-range") );
             ds.drop();
           }
           break;
@@ -901,17 +923,12 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
       {
         if ( ent )
         {
+          if ( mantIsNeg )
+            whole = -whole;
+          if ( whole < INT32_MIN || whole > INT32_MAX )
+            throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("integer out-of-range") );
           ent->type = JSONEnt::Type_Int32;
-
-          static const uint32_t maxIntegerLength = 15;
-          uint32_t length = ent->rawJSONStr.size() - ds.size();
-          if ( length > maxIntegerLength )
-            throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("integer too long") );
-
-          char buf[maxIntegerLength+1];
-          memcpy( buf, ent->rawJSONStr.data(), length );
-          buf[length] = '\0';
-          ent->value.int32 = atoi( buf );
+          ent->value.int32 = int32_t( whole );
         }
       }
       else
@@ -919,6 +936,8 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
         if ( ent )
           ent->type = JSONEnt::Type_Float64;
 
+        double frac = 0;
+        int32_t fracExp = 0;
         if ( ds.front() == '.' )
         {
           ds.drop();
@@ -928,44 +947,51 @@ void JSONEnt<JSONStrTy>::ConsumeEntity(
 
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            frac = 10 * frac + (ds.front() - '0');
             ds.drop();
+            --fracExp;
           }
         }
 
+        double mant = double(whole) + double(frac) * pow( 10.0, fracExp );
+        int16_t exp = 0;
         if ( !ds.empty() && (ds.front() == 'e' || ds.front() == 'E') )
         {
           ds.drop();
 
+          bool expIsNeg;
           if ( !ds.empty() && (ds.front() == '-' || ds.front() == '+') )
           {
+            expIsNeg = ds.front() == '-';
             ds.drop();
           }
+          else expIsNeg = false;
 
           if ( ds.empty() || ds.front() < '0' || ds.front() > '9' )
             throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("expected decimal digit") );
 
+          exp = 10 * exp + (ds.front() - '0');
           ds.drop();
           while ( !ds.empty() && ds.front() >= '0' && ds.front() <= '9' )
           {
+            int16_t oldExp = exp;
+            exp = 10 * exp + (ds.front() - '0');
+            if ( exp < oldExp )
+              throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("exponent out-of-range") );
             ds.drop();
           }
+
+          if ( expIsNeg )
+            exp = -exp;
         }
 
         if ( ent )
         {
-          static const uint32_t maxScalarLength = 31;
-          uint32_t length = ent->rawJSONStr.size() - ds.size();
-          if ( length > maxScalarLength )
-            throw JSONMalformedException( ds.getLine(), ds.getColumn(), FTL_STR("floating point too long") );
-
-          char buf[maxScalarLength+1];
-          memcpy( buf, ent->rawJSONStr.data(), length );
-          buf[length] = '\0';
-
-          char const *oldlocale = setlocale( LC_NUMERIC, "C" );
-          ent->value.float64 = atof( buf );
-          if ( oldlocale )
-            setlocale( LC_NUMERIC, oldlocale );
+          if ( mantIsNeg )
+            mant = -mant;
+          ent->value.float64 = double(mant);
+          if ( exp != 0 )
+            ent->value.float64 *= pow( 10.0, double( exp ) );
         }
       }
       
