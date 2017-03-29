@@ -165,7 +165,7 @@ inline bool FSMkDir( char const *pathCStr )
 #if defined(FTL_PLATFORM_POSIX)
   return ::mkdir( pathCStr, 0777 ) == 0;
 #elif defined(FTL_PLATFORM_WINDOWS)
-  return ::CreateDirectory( pathCStr, NULL );
+  return ::CreateDirectoryA( pathCStr, NULL );
 #endif
 }
 
