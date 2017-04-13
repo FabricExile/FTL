@@ -37,7 +37,9 @@
 #include <math.h>
 inline double round( double x ) { return floor(x+0.5); }
 inline float roundf( float x ) { return floorf(x+0.5f); }
-#define snprintf _snprintf
+#if _MSC_VER < 1900
+# define snprintf _snprintf
+#endif
 
 #else
 # error Unknown platform.
