@@ -19,6 +19,7 @@
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <unistd.h>
+# include <stdio.h>
 #elif defined(FTL_PLATFORM_WINDOWS)
 # include <Windows.h>
 #else
