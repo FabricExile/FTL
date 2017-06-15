@@ -549,6 +549,18 @@ public:
     return m_map.insert( key, value ).second;
   }
 
+  void replace( StrRef key, JSONValue *value )
+  {
+    Map::iterator it = m_map.find( key );
+    if( it != m_map.end() )
+    {
+      delete it->value();
+      it->value() = value;
+    }
+    else
+      insert( key, value );
+  }
+
 #if FTL_HAS_RVALUE_REFERENCES
   bool insert( KeyTy &&key, JSONValue *value )
   {
