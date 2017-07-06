@@ -65,7 +65,7 @@ public:
   template<typename JSONValueTy>
   JSONValueTy *maybeCast()
   {
-    assert( !!this );
+    assert( IsNotNull( this ) );
     if ( JSONValueTy::classof( this ) )
       return static_cast<JSONValueTy *>( this );
     else
@@ -75,7 +75,8 @@ public:
   template<typename JSONValueTy>
   JSONValueTy *maybeCastOrNull()
   {
-    if ( this && JSONValueTy::classof( this ) )
+    if ( IsNotNull( this )
+      && JSONValueTy::classof( this ) )
       return static_cast<JSONValueTy *>( this );
     else
       return 0;
@@ -94,7 +95,7 @@ public:
   JSONValueTy *castOrNull()
   {
     JSONValueTy *result;
-    if ( !!this )
+    if ( IsNotNull( this ) )
     {
       result = maybeCast<JSONValueTy>();
       if ( !result )
@@ -107,7 +108,7 @@ public:
   template<typename JSONValueTy>
   JSONValueTy const *maybeCast() const
   {
-    assert( !!this );
+    assert( IsNotNull( this ) );
     if ( JSONValueTy::classof( this ) )
       return static_cast<JSONValueTy const *>( this );
     else
@@ -117,7 +118,8 @@ public:
   template<typename JSONValueTy>
   JSONValueTy const *maybeCastOrNull() const
   {
-    if ( this && JSONValueTy::classof( this ) )
+    if ( IsNotNull( this )
+      && JSONValueTy::classof( this ) )
       return static_cast<JSONValueTy const *>( this );
     else
       return 0;
@@ -136,7 +138,7 @@ public:
   JSONValueTy const *castOrNull() const
   {
     JSONValueTy const *result;
-    if ( !!this )
+    if ( IsNotNull( this ) )
     {
       result = maybeCast<JSONValueTy>();
       if ( !result )
@@ -165,6 +167,9 @@ protected:
 
   JSONValue( Type type )
     : m_type( type ) {}
+
+  static bool IsNotNull( JSONValue const* jsonValue )
+    { return !!jsonValue; }
 
 private:
 
