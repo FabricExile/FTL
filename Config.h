@@ -105,6 +105,23 @@ inline float roundf( float x ) { return floorf(x+0.5f); }
 # define FTL_OVERRIDE
 #endif
 
+// From LLVM 3.5 source
+#ifndef __FTL_GNUC_PREREQ
+# if defined(__GNUC__) && defined(__GNUC_MINOR__)
+#  define __FTL_GNUC_PREREQ(maj, min) \
+    ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+# else
+#  define __FTL_GNUC_PREREQ(maj, min) 0
+# endif
+#endif
+
+// From LLVM 3.5 source
+#if __has_attribute(warn_unused_result) || __FTL_GNUC_PREREQ(3, 4)
+#define FTL_WARN_UNUSED_RESULT __attribute__((__warn_unused_result__))
+#else
+#define FTL_WARN_UNUSED_RESULT
+#endif
+
 #if !defined(FTL_NAMESPACE)
 # define FTL_NAMESPACE FTL
 #endif
