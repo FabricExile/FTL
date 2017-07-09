@@ -116,6 +116,11 @@ inline float roundf( float x ) { return floorf(x+0.5f); }
 #endif
 
 // From LLVM 3.5 source
+#ifndef __has_attribute
+# define __has_attribute(x) 0
+#endif
+
+// From LLVM 3.5 source
 #if __has_attribute(warn_unused_result) || __FTL_GNUC_PREREQ(3, 4)
 #define FTL_WARN_UNUSED_RESULT __attribute__((__warn_unused_result__))
 #else
