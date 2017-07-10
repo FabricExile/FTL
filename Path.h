@@ -89,7 +89,7 @@ inline std::string PathJoin(
 inline StrRef::Split PathSplit( StrRef path )
 {
   std::pair<StrRef, StrRef> split = path.rsplit( PathSep_Platform );
-  if ( !split.second.empty() )
+  if ( !split.first.empty() && !split.second.empty() )
     return split;
   return path.rsplit( PathSep_NonPlatform );
 }
